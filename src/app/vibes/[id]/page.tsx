@@ -10,11 +10,12 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE!
 const supabase = createClient(url, serviceKey)
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const resolvedParams = await params
   const { data } = await supabase
     .from('share_cards')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', resolvedParams.id)
     .single()
 
   if (!data) {
@@ -41,11 +42,12 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   }
 }
 
-export default async function SharePage({ params }: { params: { id: string } }) {
+export default async function SharePage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params
   const { data } = await supabase
     .from('share_cards')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', resolvedParams.id)
     .single()
 
   if (!data) {
