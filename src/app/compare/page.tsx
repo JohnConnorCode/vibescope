@@ -50,7 +50,7 @@ function CompareContent() {
       <div className="min-h-screen bg-gradient-to-b from-neutral-950 to-neutral-900 text-neutral-100 flex items-center justify-center">
         <div className="text-center">
           <p className="text-xl mb-4">No comparison data</p>
-          <Link href="/v3" className="text-purple-400 hover:text-purple-300">
+          <Link href="/" className="text-purple-400 hover:text-purple-300">
             ← Back to search
           </Link>
         </div>
@@ -75,7 +75,7 @@ function CompareContent() {
       <header className="sticky top-0 z-40 bg-neutral-950/80 backdrop-blur-md border-b border-neutral-800">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/v3" className="flex items-center gap-2 text-neutral-400 hover:text-neutral-200">
+            <Link href="/" className="flex items-center gap-2 text-neutral-400 hover:text-neutral-200">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
@@ -205,7 +205,7 @@ function CompareContent() {
         {/* Actions */}
         <div className="mt-8 flex justify-center gap-4">
           <Link 
-            href="/v3" 
+            href="/" 
             className="px-6 py-3 rounded-lg bg-neutral-800 hover:bg-neutral-700 transition"
           >
             New Search

@@ -6,11 +6,5 @@
     "src/app/api/vibe/compare/route.ts": {
       "maxDuration": 10
     }
-  },
-  "rewrites": [
-    {
-      "source": "/",
-      "destination": "/v3"
-    }
-  ]
+  }
 }
