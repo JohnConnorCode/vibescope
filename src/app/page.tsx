@@ -24,6 +24,9 @@ import { ComparisonMode } from '@/components/analysis/comparison-mode'
 import { ExportAnalysis } from '@/components/analysis/export-analysis'
 import { AnalysisHistory, addToAnalysisHistory } from '@/components/analysis/analysis-history'
 import { AdvancedFilters, type AnalysisFilters } from '@/components/analysis/advanced-filters'
+import { BatchAnalysis } from '@/components/analysis/batch-analysis'
+import { InsightsDashboard } from '@/components/analysis/insights-dashboard'
+import { ApiDocumentation } from '@/components/developer/api-documentation'
 
 interface VibeData {
   term: string
@@ -74,7 +77,7 @@ export default function HomePage() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showComparison, setShowComparison] = useState(false)
   const [analysisFilters, setAnalysisFilters] = useState<AnalysisFilters | undefined>()
-  const [activeTab, setActiveTab] = useState<'analyze' | 'batch' | 'insights'>('analyze')
+  const [activeTab, setActiveTab] = useState<'analyze' | 'batch' | 'insights' | 'developers'>('analyze')
   
   // Authentication and session tracking
   const { user } = useAuth()
