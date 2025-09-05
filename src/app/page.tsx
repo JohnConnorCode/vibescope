@@ -74,6 +74,7 @@ export default function HomePage() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showComparison, setShowComparison] = useState(false)
   const [analysisFilters, setAnalysisFilters] = useState<AnalysisFilters | undefined>()
+  const [activeTab, setActiveTab] = useState<'analyze' | 'batch' | 'insights'>('analyze')
   
   // Authentication and session tracking
   const { user } = useAuth()
