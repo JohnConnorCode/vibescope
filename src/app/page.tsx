@@ -11,7 +11,14 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { validateInput, sanitizeInput, isSentence, validateApiResponse, createRateLimiter } from '@/lib/validation'
 import { DEMO_DATA, API_CONFIG, UI_CONFIG } from '@/lib/constants'
-import { Search, AlertCircle, Info, ArrowRight, Sparkles, Brain, Shield } from 'lucide-react'
+import { Search, AlertCircle, Info, ArrowRight, Sparkles, Brain, Shield, LogIn } from 'lucide-react'
+import { useAuth } from '@/components/auth/auth-provider'
+import { useSessionTracking } from '@/lib/hooks/useSessionTracking'
+import { LoginPrompt } from '@/components/auth/login-prompt'
+import { UsageTracker } from '@/components/usage/usage-tracker'
+import { EnhancedResults } from '@/components/analysis/enhanced-results'
+import { WelcomeTour } from '@/components/onboarding/welcome-tour'
+import { AuthModal } from '@/components/auth/auth-modal'
 
 interface VibeData {
   term: string
@@ -122,6 +129,17 @@ export default function HomePage() {
   const [inputError, setInputError] = useState<string>('')
   const [isSubmissionDisabled, setIsSubmissionDisabled] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  
+  // Authentication and session tracking
+  const { user } = useAuth()
+  const { 
+    analysisCount, 
+    remainingFreeAnalyses, 
+    shouldShowLoginPrompt, 
+    trackAnalysis, 
+    dismissLoginPrompt 
+  } = useSessionTracking()
   
   // Refs for accessibility and preventing double submissions
   const submitTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
@@ -262,6 +280,9 @@ export default function HomePage() {
       })
       setRetryCount(0)
       
+      // Track analysis for session
+      trackAnalysis()
+      
     } catch (error) {
       clearTimeout(timeoutId)
       
@@ -306,6 +327,12 @@ export default function HomePage() {
       return
     }
     
+    // Check if user has reached free limit
+    if (!user && remainingFreeAnalyses === 0) {
+      setShowAuthModal(true)
+      return
+    }
+    
     // Prevent rapid submissions
     setIsSubmissionDisabled(true)
     if (submitTimeoutRef.current) {
@@ -317,7 +344,7 @@ export default function HomePage() {
     }, 1000)
     
     fetchVibe(term)
-  }, [term, inputError, loadingState.isLoading, isSubmissionDisabled, fetchVibe])
+  }, [term, inputError, loadingState.isLoading, isSubmissionDisabled, fetchVibe, user, remainingFreeAnalyses])
   
   const handleRetry = useCallback(() => {
     if (retryCount < 3) {
@@ -440,9 +467,67 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #4c1d95, #581c87, #312e81)' }}>
+      {/* Welcome Tour for new users */}
+      <WelcomeTour />
+      
+      {/* Login Prompt Modal */}
+      <LoginPrompt 
+        isOpen={shouldShowLoginPrompt}
+        onClose={dismissLoginPrompt}
+        onLogin={() => setShowAuthModal(true)}
+        analysisCount={analysisCount}
+        remainingFree={remainingFreeAnalyses}
+      />
+      
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal 
+          isOpen={showAuthModal} 
+          onClose={() => setShowAuthModal(false)} 
+        />
+      )}
+      
       <div className="container mx-auto px-4 py-4 sm:py-8 max-w-7xl">
-        {/* Header - Mobile Responsive */}
-        <header className="text-center mb-8 sm:mb-12">
+        {/* Header with Auth - Mobile Responsive */}
+        <header className="mb-8 sm:mb-12">
+          {/* User Auth Section */}
+          <div className="flex justify-end mb-4">
+            {user ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                  Welcome back!
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => window.location.href = '/dashboard'}
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                    color: 'white'
+                  }}
+                >
+                  Dashboard
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowAuthModal(true)}
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                  color: 'white'
+                }}
+              >
+                <LogIn className="h-4 w-4 mr-1" />
+                Sign In
+              </Button>
+            )}
+          </div>
+          
+          <div className="text-center">
           <h1 
             className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-4"
             style={{
@@ -459,6 +544,7 @@ export default function HomePage() {
           <p className="text-base sm:text-lg lg:text-xl mb-6 sm:mb-8 max-w-4xl mx-auto leading-relaxed px-2" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
             Discover the hidden emotional and semantic dimensions of any word, or analyze sentences for manipulation techniques and propaganda patterns using AI embeddings
           </p>
+          </div>
           
           {/* Feature highlights for better UX */}
           <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-6 text-xs sm:text-sm text-white/60">
@@ -477,10 +563,16 @@ export default function HomePage() {
           </div>
         </header>
 
-        {/* Search Card - Mobile Responsive */}
+        {/* Search Card with Usage Tracker - Mobile Responsive */}
         <main className="max-w-2xl mx-auto mb-8 sm:mb-12">
           <Card className="transition-all duration-300" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(4px)', borderColor: 'rgba(255, 255, 255, 0.2)' }}>
             <CardContent className="p-4 sm:p-6 lg:p-8">
+              {/* Usage Tracker for anonymous users */}
+              {!user && analysisCount > 0 && (
+                <div className="mb-4">
+                  <UsageTracker onLoginClick={() => setShowAuthModal(true)} />
+                </div>
+              )}
               <form onSubmit={handleSubmit} noValidate>
                 <div className="space-y-4">
                   <div className="relative">
@@ -1055,6 +1147,15 @@ export default function HomePage() {
               </div>
             )}
             </div>
+            
+            {/* Enhanced Results for logged-in users */}
+            {user && (
+              <EnhancedResults 
+                analysisType={vibeData.type || 'word'}
+                data={vibeData}
+                vibeData={vibeData}
+              />
+            )}
             
             {/* Action Buttons - Mobile Friendly */}
             <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">

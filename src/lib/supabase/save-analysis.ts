@@ -135,3 +135,19 @@ export async function getUserStatistics() {
     streak_days: 0,
   }, error: null }
 }
+
+export async function deleteAnalysis(analysisId: number) {
+  try {
+    const { error } = await supabase
+      .from('analysis_history')
+      .delete()
+      .eq('id', analysisId)
+
+    if (error) throw error
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error deleting analysis:', error)
+    return { success: false, error }
+  }
+}
