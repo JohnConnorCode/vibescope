@@ -102,6 +102,42 @@ export default function RootLayout({
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
+        <style dangerouslySetInnerHTML={{ __html: `
+          /* Critical gradient styles to ensure they load */
+          .bg-gradient-to-br {
+            background-image: linear-gradient(to bottom right, var(--tw-gradient-stops)) !important;
+          }
+          .from-violet-900 {
+            --tw-gradient-from: #4c1d95 var(--tw-gradient-from-position, );
+            --tw-gradient-to: rgb(76 29 149 / 0) var(--tw-gradient-to-position, );
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+          }
+          .via-purple-900 {
+            --tw-gradient-to: rgb(88 28 135 / 0) var(--tw-gradient-to-position, );
+            --tw-gradient-stops: var(--tw-gradient-from), #581c87 var(--tw-gradient-via-position, 50%), var(--tw-gradient-to);
+          }
+          .to-indigo-900 {
+            --tw-gradient-to: #312e81 var(--tw-gradient-to-position, );
+          }
+          .bg-gradient-to-r {
+            background-image: linear-gradient(to right, var(--tw-gradient-stops)) !important;
+          }
+          .from-cyan-300 {
+            --tw-gradient-from: #67e8f9 var(--tw-gradient-from-position, );
+            --tw-gradient-to: rgb(103 232 249 / 0) var(--tw-gradient-to-position, );
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+          }
+          .via-violet-300 {
+            --tw-gradient-to: rgb(196 181 253 / 0) var(--tw-gradient-to-position, );
+            --tw-gradient-stops: var(--tw-gradient-from), #c4b5fd var(--tw-gradient-via-position, 50%), var(--tw-gradient-to);
+          }
+          .to-pink-300 {
+            --tw-gradient-to: #f9a8d4 var(--tw-gradient-to-position, );
+          }
+          .text-white { color: white !important; }
+          .bg-white\\/10 { background-color: rgba(255, 255, 255, 0.1) !important; }
+          .border-white\\/20 { border-color: rgba(255, 255, 255, 0.2) !important; }
+        ` }} />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased h-full`}
