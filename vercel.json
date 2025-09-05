@@ -1,8 +1,5 @@
 {
   "functions": {
-    "src/app/api/og/route.tsx": {
-      "runtime": "edge"
-    },
     "src/app/api/vibe/instant/route.ts": {
       "maxDuration": 10
     },
