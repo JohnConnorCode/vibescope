@@ -6,6 +6,28 @@ const config: Config = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  safelist: [
+    'bg-gradient-to-br',
+    'from-violet-900',
+    'via-purple-900',
+    'to-indigo-900',
+    'from-cyan-300',
+    'via-violet-300',
+    'to-pink-300',
+    'bg-gradient-to-r',
+    'from-violet-500',
+    'to-purple-600',
+    'hover:from-violet-600',
+    'hover:to-purple-700',
+    'text-white',
+    'text-white/80',
+    'text-white/60',
+    'bg-white/10',
+    'bg-white/20',
+    'border-white/20',
+    'border-white/30',
+    'backdrop-blur-sm',
+  ],
   theme: {
     extend: {
       colors: {
