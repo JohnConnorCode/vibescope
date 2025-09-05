@@ -372,7 +372,7 @@ export default function HomePage() {
     const WordDemos = () => (
       <div className="space-y-4">
         <div className="text-center">
-          <p className="text-white/70 text-sm mb-3 flex items-center justify-center gap-2">
+          <p className="text-sm mb-3 flex items-center justify-center gap-2" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
             <Brain className="h-4 w-4" aria-hidden="true" />
             Try analyzing these words:
           </p>
@@ -384,7 +384,12 @@ export default function HomePage() {
                 size="sm"
                 onClick={() => handleDemoClick(demo)}
                 disabled={loadingState.isLoading}
-                className="bg-white/10 hover:bg-white/20 text-white border-white/30 hover:border-white/50 text-sm transition-all duration-300 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent min-h-[44px] px-4"
+                className="text-sm transition-all duration-300 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent min-h-[44px] px-4"
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                  color: 'white'
+                }}
                 aria-label={`Analyze the word ${demo}`}
               >
                 <Sparkles className="h-3 w-3 mr-1" aria-hidden="true" />
@@ -399,7 +404,7 @@ export default function HomePage() {
     const SentenceDemos = () => (
       <div className="space-y-4">
         <div className="text-center">
-          <p className="text-white/70 text-sm mb-3 flex items-center justify-center gap-2">
+          <p className="text-sm mb-3 flex items-center justify-center gap-2" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
             <Shield className="h-4 w-4" aria-hidden="true" />
             Or analyze these sentences for manipulation patterns:
           </p>
@@ -411,7 +416,12 @@ export default function HomePage() {
                 size="sm"
                 onClick={() => handleDemoClick(demo)}
                 disabled={loadingState.isLoading}
-                className="bg-white/10 hover:bg-white/20 text-white border-white/30 hover:border-white/50 text-xs px-4 py-3 h-auto whitespace-normal max-w-md mx-auto transition-all duration-300 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent min-h-[44px]"
+                className="text-xs px-4 py-3 h-auto whitespace-normal max-w-md mx-auto transition-all duration-300 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent min-h-[44px]"
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                  color: 'white'
+                }}
                 aria-label={`Analyze this sentence for manipulation patterns`}
               >
                 <div className="flex items-start gap-2">
@@ -429,17 +439,24 @@ export default function HomePage() {
   }, [handleDemoClick, loadingState.isLoading])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-900 via-purple-900 to-indigo-900">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #4c1d95, #581c87, #312e81)' }}>
       <div className="container mx-auto px-4 py-4 sm:py-8 max-w-7xl">
         {/* Header - Mobile Responsive */}
         <header className="text-center mb-8 sm:mb-12">
           <h1 
-            className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-4 bg-gradient-to-r from-cyan-300 via-violet-300 to-pink-300 bg-clip-text text-transparent"
+            className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-4"
+            style={{
+              background: 'linear-gradient(to right, #67e8f9, #c4b5fd, #f9a8d4)',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              color: 'transparent'
+            }}
             role="banner"
           >
-            VibeScope
+            VibeScope [v4-direct-styles]
           </h1>
-          <p className="text-base sm:text-lg lg:text-xl text-white/80 mb-6 sm:mb-8 max-w-4xl mx-auto leading-relaxed px-2">
+          <p className="text-base sm:text-lg lg:text-xl mb-6 sm:mb-8 max-w-4xl mx-auto leading-relaxed px-2" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
             Discover the hidden emotional and semantic dimensions of any word, or analyze sentences for manipulation techniques and propaganda patterns using AI embeddings
           </p>
           
@@ -462,7 +479,7 @@ export default function HomePage() {
 
         {/* Search Card - Mobile Responsive */}
         <main className="max-w-2xl mx-auto mb-8 sm:mb-12">
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20 transition-all duration-300 hover:bg-white/15">
+          <Card className="transition-all duration-300" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(4px)', borderColor: 'rgba(255, 255, 255, 0.2)' }}>
             <CardContent className="p-4 sm:p-6 lg:p-8">
               <form onSubmit={handleSubmit} noValidate>
                 <div className="space-y-4">
