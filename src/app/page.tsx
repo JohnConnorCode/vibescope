@@ -11,7 +11,7 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { validateInput, sanitizeInput, isSentence, validateApiResponse, createRateLimiter } from '@/lib/validation'
 import { DEMO_DATA, API_CONFIG, UI_CONFIG } from '@/lib/constants'
-import { Search, AlertCircle, Info, ArrowRight, Sparkles, Brain, Shield, LogIn } from 'lucide-react'
+import { Search, AlertCircle, Info, ArrowRight, Sparkles, Brain, Shield, LogIn, Zap, Activity, BarChart3, GitCompare, Settings } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-provider'
 import { useSessionTracking } from '@/lib/hooks/useSessionTracking'
 import { LoginPrompt } from '@/components/auth/login-prompt'
@@ -19,6 +19,11 @@ import { UsageTracker } from '@/components/usage/usage-tracker'
 import { EnhancedResults } from '@/components/analysis/enhanced-results'
 import { WelcomeTour } from '@/components/onboarding/welcome-tour'
 import { AuthModal } from '@/components/auth/auth-modal'
+import { AnalysisSuggestions } from '@/components/analysis/analysis-suggestions'
+import { ComparisonMode } from '@/components/analysis/comparison-mode'
+import { ExportAnalysis } from '@/components/analysis/export-analysis'
+import { AnalysisHistory, addToAnalysisHistory } from '@/components/analysis/analysis-history'
+import { AdvancedFilters, type AnalysisFilters } from '@/components/analysis/advanced-filters'
 
 interface VibeData {
   term: string
@@ -58,69 +63,6 @@ const rateLimiter = createRateLimiter(API_CONFIG.rateLimit.maxRequests, API_CONF
 const DEMO_VIBES = DEMO_DATA.words
 const DEMO_SENTENCES = DEMO_DATA.sentences
 
-const AXIS_DESCRIPTIONS: Record<string, { description: string; positive: string; negative: string }> = {
-  masculine_feminine: {
-    description: 'Gender-associated qualities and characteristics',
-    positive: 'Strong, assertive, competitive',
-    negative: 'Gentle, nurturing, collaborative'
-  },
-  concrete_abstract: {
-    description: 'How tangible vs conceptual the idea is',
-    positive: 'Physical, measurable, specific',
-    negative: 'Theoretical, conceptual, philosophical'
-  },
-  active_passive: {
-    description: 'Level of energy and initiative',
-    positive: 'Dynamic, proactive, energetic',
-    negative: 'Calm, receptive, still'
-  },
-  positive_negative: {
-    description: 'Emotional valence and feeling tone',
-    positive: 'Uplifting, optimistic, good',
-    negative: 'Sad, pessimistic, bad'
-  },
-  serious_playful: {
-    description: 'Tone and approach to life',
-    positive: 'Formal, important, grave',
-    negative: 'Fun, lighthearted, whimsical'
-  },
-  complex_simple: {
-    description: 'Level of sophistication and intricacy',
-    positive: 'Complicated, nuanced, detailed',
-    negative: 'Straightforward, basic, easy'
-  },
-  intense_mild: {
-    description: 'Strength and force of expression',
-    positive: 'Powerful, extreme, forceful',
-    negative: 'Gentle, moderate, subtle'
-  },
-  natural_artificial: {
-    description: 'Origin and authenticity',
-    positive: 'Organic, authentic, genuine',
-    negative: 'Synthetic, manufactured, fake'
-  },
-  private_public: {
-    description: 'Level of openness and visibility',
-    positive: 'Personal, intimate, hidden',
-    negative: 'Open, shared, communal'
-  },
-  high_status_low_status: {
-    description: 'Social position and prestige',
-    positive: 'Prestigious, elite, refined',
-    negative: 'Common, humble, ordinary'
-  },
-  ordered_chaotic: {
-    description: 'Level of structure and organization',
-    positive: 'Organized, systematic, controlled',
-    negative: 'Random, messy, unpredictable'
-  },
-  future_past: {
-    description: 'Temporal orientation and direction',
-    positive: 'Forward-looking, modern, progressive',
-    negative: 'Traditional, nostalgic, historical'
-  }
-}
-
 export default function HomePage() {
   const [term, setTerm] = useState('')
   const [vibeData, setVibeData] = useState<VibeData | null>(null)
@@ -130,6 +72,8 @@ export default function HomePage() {
   const [isSubmissionDisabled, setIsSubmissionDisabled] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showComparison, setShowComparison] = useState(false)
+  const [analysisFilters, setAnalysisFilters] = useState<AnalysisFilters | undefined>()
   
   // Authentication and session tracking
   const { user } = useAuth()
@@ -231,9 +175,30 @@ export default function HomePage() {
         progress: isAnalyzingSentence ? 'Analyzing sentence patterns...' : 'Processing word embeddings...' 
       }))
       
+      // Build query params with filters
+      const params = new URLSearchParams()
+      if (isAnalyzingSentence) {
+        params.append('text', sanitizedTerm)
+      } else {
+        params.append('term', sanitizedTerm)
+      }
+      
+      // Add filter parameters if they exist
+      if (analysisFilters) {
+        if (analysisFilters.context !== 'general') {
+          params.append('context', analysisFilters.context)
+        }
+        if (analysisFilters.sensitivity !== 'medium') {
+          params.append('sensitivity', analysisFilters.sensitivity)
+        }
+        if (analysisFilters.focus.length > 0) {
+          params.append('focus', analysisFilters.focus.join(','))
+        }
+      }
+      
       const endpoint = isAnalyzingSentence 
-        ? `/api/vibe/analyze-sentence?text=${encodeURIComponent(sanitizedTerm)}`
-        : `/api/vibe?term=${encodeURIComponent(sanitizedTerm)}`
+        ? `/api/vibe/analyze-sentence?${params.toString()}`
+        : `/api/vibe?${params.toString()}`
       
       const res = await fetch(endpoint, {
         signal: abortControllerRef.current.signal,
@@ -283,6 +248,14 @@ export default function HomePage() {
       // Track analysis for session
       trackAnalysis()
       
+      // Add to history
+      addToAnalysisHistory(
+        sanitizedTerm,
+        isAnalyzingSentence ? 'sentence' : 'word',
+        isAnalyzingSentence && data.propaganda ? data.propaganda.overallManipulation : undefined,
+        user?.id
+      )
+      
     } catch (error) {
       clearTimeout(timeoutId)
       
@@ -318,7 +291,7 @@ export default function HomePage() {
       setLoadingState({ isLoading: false, isRetrying: false })
       abortControllerRef.current = null
     }
-  }, [loadingState.isLoading])
+  }, [loadingState.isLoading, trackAnalysis, user?.id, analysisFilters])
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault()
@@ -355,9 +328,18 @@ export default function HomePage() {
   
   const handleDemoClick = useCallback((demoTerm: string) => {
     setTerm(demoTerm)
+    setShowComparison(false) // Exit comparison mode when selecting new term
     // Small delay to allow state to update
     setTimeout(() => {
       fetchVibe(demoTerm)
+    }, 50)
+  }, [fetchVibe])
+  
+  const handleHistorySelect = useCallback((selectedTerm: string) => {
+    setTerm(selectedTerm)
+    setShowComparison(false)
+    setTimeout(() => {
+      fetchVibe(selectedTerm)
     }, 50)
   }, [fetchVibe])
   
@@ -394,79 +376,18 @@ export default function HomePage() {
     })
   }, [vibeData?.axes])
   
-  // Memoized demo buttons to prevent unnecessary re-renders
-  const DemoButtons = useMemo(() => {
-    const WordDemos = () => (
-      <div className="space-y-4">
-        <div className="text-center">
-          <p className="text-sm mb-3 flex items-center justify-center gap-2" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-            <Brain className="h-4 w-4" aria-hidden="true" />
-            Try analyzing these words:
-          </p>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {DEMO_VIBES.map(demo => (
-              <Button
-                key={demo}
-                variant="outline"
-                size="sm"
-                onClick={() => handleDemoClick(demo)}
-                disabled={loadingState.isLoading}
-                className="text-sm transition-all duration-300 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent min-h-[44px] px-4"
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  borderColor: 'rgba(255, 255, 255, 0.3)',
-                  color: 'white'
-                }}
-                aria-label={`Analyze the word ${demo}`}
-              >
-                <Sparkles className="h-3 w-3 mr-1" aria-hidden="true" />
-                {demo}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-    
-    const SentenceDemos = () => (
-      <div className="space-y-4">
-        <div className="text-center">
-          <p className="text-sm mb-3 flex items-center justify-center gap-2" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-            <Shield className="h-4 w-4" aria-hidden="true" />
-            Or analyze these sentences for manipulation patterns:
-          </p>
-          <div className="flex flex-col gap-2">
-            {DEMO_SENTENCES.map((demo, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                size="sm"
-                onClick={() => handleDemoClick(demo)}
-                disabled={loadingState.isLoading}
-                className="text-xs px-4 py-3 h-auto whitespace-normal max-w-md mx-auto transition-all duration-300 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent min-h-[44px]"
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  borderColor: 'rgba(255, 255, 255, 0.3)',
-                  color: 'white'
-                }}
-                aria-label={`Analyze this sentence for manipulation patterns`}
-              >
-                <div className="flex items-start gap-2">
-                  <ArrowRight className="h-3 w-3 mt-1 flex-shrink-0" aria-hidden="true" />
-                  <span className="text-left">"{demo}"</span>
-                </div>
-              </Button>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-    
-    return { WordDemos, SentenceDemos }
-  }, [handleDemoClick, loadingState.isLoading])
-
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #4c1d95, #581c87, #312e81)' }}>
+    <div className="min-h-screen relative overflow-x-hidden">
+      {/* Animated background gradient */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl animate-pulse-glow" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-3xl animate-float" />
+      </div>
+      
+      {/* Grid pattern overlay */}
+      <div className="fixed inset-0 grid-pattern pointer-events-none opacity-30" />
+      
       {/* Welcome Tour for new users */}
       <WelcomeTour />
       
@@ -487,92 +408,100 @@ export default function HomePage() {
         />
       )}
       
-      <div className="container mx-auto px-4 py-4 sm:py-8 max-w-7xl">
-        {/* Header with Auth - Mobile Responsive */}
-        <header className="mb-8 sm:mb-12">
+      <div className="container mx-auto px-4 py-4 sm:py-8 max-w-7xl relative z-10">
+        {/* Header with Auth */}
+        <header className="mb-8 sm:mb-12 animate-fade-in">
           {/* User Auth Section */}
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end mb-6">
             {user ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+              <div className="glass-card px-4 py-2 inline-flex items-center gap-3">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                   Welcome back!
                 </span>
                 <Button 
-                  variant="outline" 
+                  variant="ghost" 
                   size="sm"
                   onClick={() => window.location.href = '/dashboard'}
-                  style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    borderColor: 'rgba(255, 255, 255, 0.3)',
-                    color: 'white'
-                  }}
+                  className="hover:bg-white/10 transition-colors"
                 >
                   Dashboard
                 </Button>
               </div>
             ) : (
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 size="sm"
                 onClick={() => setShowAuthModal(true)}
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  borderColor: 'rgba(255, 255, 255, 0.3)',
-                  color: 'white'
-                }}
+                className="glass-card hover:bg-white/10 transition-all hover:scale-105 px-4 py-2 flex items-center gap-2"
               >
-                <LogIn className="h-4 w-4 mr-1" />
-                Sign In
+                <LogIn className="h-4 w-4" />
+                <span className="font-medium">Sign In</span>
               </Button>
             )}
           </div>
           
           <div className="text-center">
-          <h1 
-            className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-4"
-            style={{
-              background: 'linear-gradient(to right, #67e8f9, #c4b5fd, #f9a8d4)',
-              WebkitBackgroundClip: 'text',
-              backgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              color: 'transparent'
-            }}
-            role="banner"
-          >
-            VibeScope
-          </h1>
-          <p className="text-base sm:text-lg lg:text-xl mb-6 sm:mb-8 max-w-4xl mx-auto leading-relaxed px-2" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-            Discover the hidden emotional and semantic dimensions of any word, or analyze sentences for manipulation techniques and propaganda patterns using AI embeddings
-          </p>
+            <div className="inline-block animate-float">
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-4 relative">
+                <span className="text-gradient neon-text">VibeScope</span>
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur-3xl opacity-30 animate-pulse-glow" />
+              </h1>
+            </div>
+            <p className="text-lg sm:text-xl lg:text-2xl mb-8 max-w-4xl mx-auto leading-relaxed px-2" 
+               style={{ color: 'var(--text-secondary)' }}>
+              Discover the hidden emotional and semantic dimensions of language with AI-powered analysis
+            </p>
           </div>
           
-          {/* Feature highlights for better UX */}
-          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-6 text-xs sm:text-sm text-white/60">
-            <div className="flex items-center gap-1 px-2 py-1 bg-white/10 rounded-full">
-              <Brain className="h-3 w-3" aria-hidden="true" />
-              <span>Semantic Analysis</span>
+          {/* Feature highlights */}
+          <div className="flex flex-wrap justify-center gap-4 mb-6">
+            <div className="glass-card px-4 py-2 flex items-center gap-2 hover:scale-105 transition-transform cursor-default">
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-600/20">
+                <Brain className="h-4 w-4 text-purple-400" />
+              </div>
+              <span className="text-sm font-medium">Semantic Analysis</span>
             </div>
-            <div className="flex items-center gap-1 px-2 py-1 bg-white/10 rounded-full">
-              <Shield className="h-3 w-3" aria-hidden="true" />
-              <span>Manipulation Detection</span>
+            <div className="glass-card px-4 py-2 flex items-center gap-2 hover:scale-105 transition-transform cursor-default">
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-500/20 to-orange-600/20">
+                <Shield className="h-4 w-4 text-orange-400" />
+              </div>
+              <span className="text-sm font-medium">Manipulation Detection</span>
             </div>
-            <div className="flex items-center gap-1 px-2 py-1 bg-white/10 rounded-full">
-              <Sparkles className="h-3 w-3" aria-hidden="true" />
-              <span>AI Powered</span>
+            <div className="glass-card px-4 py-2 flex items-center gap-2 hover:scale-105 transition-transform cursor-default">
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-600/20">
+                <Zap className="h-4 w-4 text-blue-400" />
+              </div>
+              <span className="text-sm font-medium">AI Powered</span>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowComparison(!showComparison)}
+              className={`glass-card px-4 py-2 flex items-center gap-2 hover:scale-105 transition-transform ${
+                showComparison ? 'bg-white/10 border-purple-400' : ''
+              }`}
+            >
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-pink-500/20 to-purple-600/20">
+                <GitCompare className="h-4 w-4 text-pink-400" />
+              </div>
+              <span className="text-sm font-medium">Compare Mode</span>
+            </Button>
           </div>
         </header>
 
-        {/* Search Card with Usage Tracker - Mobile Responsive */}
-        <main className="max-w-2xl mx-auto mb-8 sm:mb-12">
-          <Card className="transition-all duration-300" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(4px)', borderColor: 'rgba(255, 255, 255, 0.2)' }}>
-            <CardContent className="p-4 sm:p-6 lg:p-8">
+        {/* Search Card */}
+        <main className="max-w-2xl mx-auto mb-8 sm:mb-12 animate-slide-up">
+          <div className="gradient-border relative">
+            <div className="glass-card-elevated backdrop-blur-xl">
+              <CardContent className="p-6 sm:p-8">
               {/* Usage Tracker for anonymous users */}
               {!user && analysisCount > 0 && (
-                <div className="mb-4">
+                <div className="mb-6">
                   <UsageTracker onLoginClick={() => setShowAuthModal(true)} />
                 </div>
               )}
+              
               <form onSubmit={handleSubmit} noValidate>
                 <div className="space-y-4">
                   <div className="relative">
@@ -586,13 +515,7 @@ export default function HomePage() {
                       value={term}
                       onChange={handleInputChange}
                       placeholder="Enter any word or sentence to analyze..."
-                      className={`
-                        text-base sm:text-lg h-12 sm:h-16 pl-4 sm:pl-6 pr-16 sm:pr-20 
-                        bg-white/10 border-white/20 text-white placeholder:text-white/60 
-                        focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20 
-                        transition-all duration-300
-                        ${inputError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20' : ''}
-                      `}
+                      className="input-dark h-14 sm:h-16 pl-6 pr-32 text-base sm:text-lg font-medium"
                       autoFocus
                       disabled={loadingState.isLoading}
                       autoComplete="off"
@@ -605,26 +528,18 @@ export default function HomePage() {
                     <Button 
                       type="submit"
                       disabled={loadingState.isLoading || !term.trim() || !!inputError || isSubmissionDisabled}
-                      className="
-                        absolute right-1 sm:right-2 top-1 sm:top-2 
-                        h-10 sm:h-12 px-3 sm:px-6 text-sm sm:text-base
-                        bg-gradient-to-r from-violet-500 to-purple-600 
-                        hover:from-violet-600 hover:to-purple-700 
-                        disabled:opacity-50 disabled:cursor-not-allowed
-                        transition-all duration-300 focus-visible:ring-2 focus-visible:ring-cyan-400
-                        min-w-[80px] sm:min-w-[100px]
-                      "
+                      className="absolute right-2 top-2 h-10 sm:h-12 px-6 btn-primary shadow-lg hover:shadow-xl"
                       aria-label="Analyze input text"
                     >
                       {loadingState.isLoading ? (
                         <div className="flex items-center gap-2">
-                          <LoadingSpinner size="sm" className="text-white" />
-                          <span className="hidden sm:inline">Analyzing</span>
+                          <div className="loading-spinner w-4 h-4" />
+                          <span className="hidden sm:inline font-semibold">Analyzing</span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-1 sm:gap-2">
-                          <Search className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true" />
-                          <span>Analyze</span>
+                        <div className="flex items-center gap-2">
+                          <Search className="h-4 w-4" />
+                          <span className="font-semibold">Analyze</span>
                         </div>
                       )}
                     </Button>
@@ -634,11 +549,11 @@ export default function HomePage() {
                   {inputError && (
                     <div 
                       id="input-error"
-                      className="flex items-center gap-2 text-red-300 text-sm"
+                      className="flex items-center gap-2 text-red-400 text-sm"
                       role="alert"
                       aria-live="polite"
                     >
-                      <AlertCircle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                      <AlertCircle className="h-4 w-4 flex-shrink-0" />
                       <span>{inputError}</span>
                     </div>
                   )}
@@ -646,90 +561,131 @@ export default function HomePage() {
                   {/* Loading progress */}
                   {loadingState.isLoading && loadingState.progress && (
                     <div 
-                      className="flex items-center gap-2 text-cyan-300 text-sm"
+                      className="flex items-center gap-2 text-purple-400 text-sm"
                       aria-live="polite"
                       aria-label="Analysis progress"
                     >
-                      <LoadingSpinner size="sm" className="text-cyan-400" />
+                      <Activity className="h-4 w-4 animate-pulse" />
                       <span>{loadingState.progress}</span>
                     </div>
                   )}
                   
                   {/* Helper text */}
                   {!inputError && !loadingState.isLoading && (
-                    <p 
-                      id="input-help" 
-                      className="text-white/50 text-xs sm:text-sm flex items-center gap-2"
-                    >
-                      <Info className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
-                      Single words show semantic dimensions, sentences reveal manipulation patterns
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p 
+                        id="input-help" 
+                        className="text-xs sm:text-sm flex items-center gap-2"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        <Info className="h-3 w-3 flex-shrink-0" />
+                        <span>Single words show semantic dimensions, sentences reveal manipulation patterns</span>
+                      </p>
+                      <AdvancedFilters 
+                        onApplyFilters={setAnalysisFilters}
+                        currentFilters={analysisFilters}
+                      />
+                    </div>
                   )}
                 </div>
               </form>
 
-              {/* Demo Examples - Mobile Responsive */}
+              {/* Demo Examples */}
               {!vibeData && !loadingState.isLoading && (
-                <div className="mt-6 space-y-6">
-                  <DemoButtons.WordDemos />
-                  <DemoButtons.SentenceDemos />
+                <div className="mt-8 space-y-6">
+                  {/* Word Demos */}
+                  <div className="space-y-4">
+                    <p className="text-sm text-center flex items-center justify-center gap-2" 
+                       style={{ color: 'var(--text-tertiary)' }}>
+                      <Sparkles className="h-4 w-4" />
+                      Try analyzing these words:
+                    </p>
+                    <div className="flex flex-wrap gap-2 justify-center demo-buttons">
+                      {DEMO_VIBES.map(demo => (
+                        <Button
+                          key={demo}
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDemoClick(demo)}
+                          disabled={loadingState.isLoading}
+                          className="glass-card hover:bg-white/10 hover:scale-105 transition-all px-4 py-2"
+                        >
+                          <span className="font-medium">{demo}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Sentence Demos */}
+                  <div className="space-y-4">
+                    <p className="text-sm text-center flex items-center justify-center gap-2"
+                       style={{ color: 'var(--text-tertiary)' }}>
+                      <Shield className="h-4 w-4" />
+                      Or detect manipulation in these sentences:
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      {DEMO_SENTENCES.map((demo, index) => (
+                        <Button
+                          key={index}
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDemoClick(demo)}
+                          disabled={loadingState.isLoading}
+                          className="glass-card hover:bg-white/10 hover:scale-[1.02] transition-all text-left justify-start px-4 py-3"
+                        >
+                          <ArrowRight className="h-3 w-3 mr-2 flex-shrink-0 text-purple-400" />
+                          <span className="truncate font-medium">"{demo}"</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </div>
+          </div>
         </main>
+        
+        {/* Analysis History */}
+        {!loadingState.isLoading && !vibeData && (
+          <section className="max-w-4xl mx-auto mb-8 animate-slide-up">
+            <AnalysisHistory 
+              onSelectItem={handleHistorySelect}
+              userId={user?.id}
+            />
+          </section>
+        )}
 
-        {/* Error Message - Enhanced UX */}
+        {/* Error Message */}
         {error && (
-          <section className="max-w-4xl mx-auto mb-6 sm:mb-8" aria-labelledby="error-heading">
-            <Alert className="bg-red-500/10 border-red-500/30 text-red-200 transition-all duration-300">
+          <section className="max-w-4xl mx-auto mb-8 animate-fade-in">
+            <Alert className="glass-card border-red-500/30">
               <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <h3 id="error-heading" className="font-semibold mb-2 text-red-300">
+                  <h3 className="font-semibold mb-2 text-red-300">
                     Analysis Error
                   </h3>
                   <AlertDescription className="space-y-3">
-                    <p>{error.message}</p>
-                    
-                    {error.message.includes('API key') && (
-                      <div className="mt-3 p-3 bg-red-500/20 rounded-lg text-sm">
-                        <p className="font-medium">Configuration Issue:</p>
-                        <p>Please add your OpenAI API key to your <code className="bg-red-500/30 px-1 py-0.5 rounded font-mono">env.local</code> file.</p>
-                      </div>
-                    )}
-                    
-                    {error.code === 'RATE_LIMITED' && (
-                      <div className="mt-3 p-3 bg-orange-500/20 border border-orange-500/30 rounded-lg text-sm">
-                        <p className="font-medium text-orange-200">Rate Limit Reached</p>
-                        <p className="text-orange-300">Please wait a moment before making another request.</p>
-                      </div>
-                    )}
+                    <p style={{ color: 'var(--text-secondary)' }}>{error.message}</p>
                     
                     {error.retryable && retryCount < 3 && (
-                      <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                      <div className="mt-4">
                         <Button
                           onClick={handleRetry}
                           size="sm"
-                          className="bg-red-600 hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-red-400"
+                          className="btn-primary"
                           disabled={loadingState.isRetrying}
-                          aria-label={`Retry analysis. Attempt ${retryCount + 1} of 3`}
                         >
                           {loadingState.isRetrying ? (
                             <>
-                              <LoadingSpinner size="sm" className="mr-2" />
+                              <div className="loading-spinner w-4 h-4 mr-2" />
                               Retrying...
                             </>
                           ) : (
                             'Try Again'
                           )}
                         </Button>
-                        
-                        {retryCount > 0 && (
-                          <span className="text-xs text-red-300 self-center">
-                            Attempt {retryCount + 1} of 3
-                          </span>
-                        )}
                       </div>
                     )}
                   </AlertDescription>
@@ -739,414 +695,277 @@ export default function HomePage() {
           </section>
         )}
 
-        {/* Loading State - Enhanced with Skeletons */}
-        {loadingState.isLoading && (
-          <section className="max-w-6xl mx-auto mb-6 sm:mb-8" aria-labelledby="loading-heading">
-            {!vibeData ? (
-              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-                <CardContent className="p-4 sm:p-6 lg:p-8">
-                  <div className="text-center">
-                    <LoadingSpinner size="lg" className="text-cyan-400 mb-4" />
-                    <h3 id="loading-heading" className="text-white/80 text-lg mb-2">
-                      Analyzing "{term.slice(0, 50)}{term.length > 50 ? '...' : ''}"
-                    </h3>
-                    {loadingState.progress && (
-                      <p className="text-white/60 text-sm" aria-live="polite">
-                        {loadingState.progress}
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <FullAnalysisSkeleton />
-            )}
+        {/* Loading State */}
+        {loadingState.isLoading && !vibeData && (
+          <section className="max-w-6xl mx-auto mb-8 animate-fade-in">
+            <div className="glass-card-elevated p-8">
+              <div className="text-center">
+                <div className="relative inline-block">
+                  <div className="loading-spinner mx-auto mb-4" />
+                  <div className="absolute inset-0 loading-spinner mx-auto mb-4 blur-xl opacity-50" />
+                </div>
+                <h3 className="text-xl mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Analyzing "{term.slice(0, 50)}{term.length > 50 ? '...' : ''}"
+                </h3>
+                {loadingState.progress && (
+                  <p className="animate-pulse" style={{ color: 'var(--text-tertiary)' }}>
+                    {loadingState.progress}
+                  </p>
+                )}
+              </div>
+            </div>
           </section>
         )}
 
-        {/* Results Section - Mobile Responsive & Accessible */}
-        {vibeData && (
-          <section className="max-w-6xl mx-auto space-y-6 sm:space-y-8" aria-labelledby="results-heading">
-            <div className="sr-only">
-              <h2 id="results-heading">Analysis Results for "{vibeData.term}"</h2>
-            </div>
-            
+        {/* Comparison Mode */}
+        {showComparison && !loadingState.isLoading && (
+          <section className="max-w-6xl mx-auto mb-8 animate-slide-up">
+            <ComparisonMode
+              initialTerm={vibeData?.term}
+              initialData={vibeData?.axes}
+              onAnalyze={async (compTerm) => {
+                const endpoint = isSentence(compTerm)
+                  ? `/api/vibe/analyze-sentence?text=${encodeURIComponent(compTerm)}`
+                  : `/api/vibe?term=${encodeURIComponent(compTerm)}`
+                
+                const res = await fetch(endpoint)
+                if (!res.ok) throw new Error('Failed to analyze')
+                return await res.json()
+              }}
+            />
+          </section>
+        )}
+
+        {/* Results Section */}
+        {vibeData && !showComparison && (
+          <section className="max-w-6xl mx-auto space-y-8 animate-slide-up">
             {/* Success feedback */}
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-600/20 border border-green-500/30 rounded-full text-green-200 text-sm">
-                <div className="w-2 h-2 bg-green-400 rounded-full" aria-hidden="true"></div>
+            <div className="text-center">
+              <div className="inline-flex items-center gap-2 chip chip-success">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                 <span>Analysis complete</span>
               </div>
             </div>
             
-            {/* Propaganda Analysis Card - Show only for sentences */}
+            {/* Propaganda Analysis for Sentences */}
             {vibeData.type === 'sentence' && vibeData.propaganda && (
-              <Card 
-                className="bg-gradient-to-r from-red-900/20 via-orange-900/20 to-yellow-900/20 backdrop-blur-sm border-orange-500/30 transition-all duration-300 hover:border-orange-400/40"
-                role="region"
-                aria-labelledby="propaganda-analysis-heading"
-              >
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-white text-xl sm:text-2xl flex items-center gap-2" id="propaganda-analysis-heading">
-                    <span className="text-orange-400" role="img" aria-label="Warning">⚠️</span>
-                    Manipulation & Propaganda Analysis
-                  </CardTitle>
-                  <p className="text-white/70 text-sm leading-relaxed">
-                    Educational analysis of potential manipulation techniques detected in the sentence. 
-                    This helps build media literacy skills.
-                  </p>
-                </CardHeader>
-                <CardContent className="p-4 sm:p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                    {/* Overall Manipulation Score */}
-                    <div className="text-center p-4 bg-black/20 rounded-lg" role="region" aria-labelledby="overall-score">
-                      <div 
-                        className={`text-3xl sm:text-4xl font-bold mb-2 transition-colors duration-300 ${
-                          vibeData.propaganda.overallManipulation > 70 ? 'text-red-400' :
-                          vibeData.propaganda.overallManipulation > 40 ? 'text-orange-400' : 'text-green-400'
-                        }`}
-                        aria-label={`Overall manipulation score: ${Math.round(vibeData.propaganda.overallManipulation)} out of 100`}
-                      >
-                        {Math.round(vibeData.propaganda.overallManipulation)}
-                        <span className="text-lg text-white/60">/100</span>
-                      </div>
-                      <div id="overall-score" className="text-white/80 text-sm font-semibold">
-                        Overall Manipulation Score
-                      </div>
-                      <div className="text-xs text-white/50 mt-1">
-                        {vibeData.propaganda.overallManipulation > 70 ? 'High concern' :
-                         vibeData.propaganda.overallManipulation > 40 ? 'Moderate concern' : 'Low concern'}
-                      </div>
+              <div className="glass-card-elevated p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <Shield className="h-6 w-6 text-orange-400" />
+                  <h2 className="text-2xl font-bold">Manipulation Analysis</h2>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Overall Score */}
+                  <div className="text-center p-6 glass-card">
+                    <div className={`text-4xl font-bold mb-2 ${
+                      vibeData.propaganda.overallManipulation > 70 ? 'text-red-400' :
+                      vibeData.propaganda.overallManipulation > 40 ? 'text-orange-400' : 'text-green-400'
+                    }`}>
+                      {Math.round(vibeData.propaganda.overallManipulation)}
+                      <span className="text-lg" style={{ color: 'var(--text-muted)' }}>/100</span>
                     </div>
-
-                    {/* Individual Scores - Accessible & Mobile-friendly */}
-                    {[
-                      { key: 'emotionalManipulation', label: 'Emotional Manipulation', description: 'Use of emotions to influence rather than facts' },
-                      { key: 'strategicAmbiguity', label: 'Strategic Ambiguity', description: 'Deliberately vague language' },
-                      { key: 'loadedLanguage', label: 'Loaded Language', description: 'Words with strong emotional associations' },
-                      { key: 'fearTactics', label: 'Fear Tactics', description: 'Appeals to fear or anxiety' },
-                      { key: 'appealToAuthority', label: 'Appeal to Authority', description: 'Reliance on authority rather than evidence' },
-                      { key: 'bandwagon', label: 'Bandwagon Effect', description: 'Everyone else is doing it argument' },
-                      { key: 'falseDichotomy', label: 'False Dichotomy', description: 'Presenting only two options when more exist' },
-                      { key: 'gaslighting', label: 'Gaslighting', description: 'Making someone question their own reality' }
-                    ].map(({ key, label, description }) => {
-                      const score = Math.round((vibeData.propaganda as any)[key])
+                    <div className="font-semibold">Overall Manipulation</div>
+                  </div>
+                  
+                  {/* Individual Scores */}
+                  {Object.entries(vibeData.propaganda)
+                    .filter(([key]) => key !== 'overallManipulation' && key !== 'techniques' && key !== 'explanations')
+                    .map(([key, value]) => {
+                      const score = Math.round(value as number)
                       if (score === 0) return null
                       
                       return (
-                        <div 
-                          key={key} 
-                          className="bg-black/20 rounded-lg p-3 transition-all duration-300 hover:bg-black/30"
-                          role="region"
-                          aria-labelledby={`score-${key}-label`}
-                        >
-                          <div className="flex justify-between items-start mb-3">
-                            <div className="flex-1 mr-2">
-                              <span id={`score-${key}-label`} className="text-white text-sm font-medium block">
-                                {label}
-                              </span>
-                              <span className="text-white/50 text-xs block mt-1">
-                                {description}
-                              </span>
-                            </div>
-                            <span 
-                              className={`text-sm font-bold px-2 py-1 rounded shrink-0 ${
-                                score > 70 ? 'bg-red-500/20 text-red-300' :
-                                score > 40 ? 'bg-orange-500/20 text-orange-300' : 'bg-green-500/20 text-green-300'
-                              }`}
-                              aria-label={`Score: ${score} out of 100`}
-                            >
+                        <div key={key} className="p-4 glass-card">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-medium">
+                              {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                            </span>
+                            <span className={`font-bold ${
+                              score > 70 ? 'text-red-400' :
+                              score > 40 ? 'text-orange-400' : 'text-green-400'
+                            }`}>
                               {score}
                             </span>
                           </div>
-                          <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+                          <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
                             <div 
-                              className={`h-2 rounded-full transition-all duration-1000 ease-out ${
+                              className={`h-full rounded-full transition-all duration-1000 ${
                                 score > 70 ? 'bg-red-500' :
                                 score > 40 ? 'bg-orange-500' : 'bg-green-500'
                               }`}
-                              style={{ width: `${Math.min(score, 100)}%` }}
-                              role="progressbar"
-                              aria-valuenow={score}
-                              aria-valuemin={0}
-                              aria-valuemax={100}
-                              aria-label={`${label}: ${score} out of 100`}
+                              style={{ width: `${score}%` }}
                             />
                           </div>
                         </div>
                       )
                     })}
-                  </div>
-
-                  {/* Detected Techniques - Enhanced Layout */}
-                  {vibeData.propaganda.techniques.length > 0 && (
-                    <div className="mt-6 lg:col-span-3">
-                      <h4 className="text-white text-lg font-semibold mb-3 flex items-center gap-2">
-                        <span role="img" aria-label="Detection">🔍</span>
-                        Detected Manipulation Techniques
-                      </h4>
-                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                        {vibeData.propaganda.explanations.map((explanation, index) => (
-                          <div 
-                            key={index} 
-                            className="bg-black/20 rounded-lg p-4 transition-all duration-300 hover:bg-black/30 border border-transparent hover:border-orange-500/20"
-                            role="article"
-                            aria-labelledby={`technique-${index}-title`}
-                          >
-                            <h5 
-                              id={`technique-${index}-title`}
-                              className="text-orange-300 text-sm font-medium mb-2 flex items-center gap-2"
-                            >
-                              <span className="w-1.5 h-1.5 bg-orange-400 rounded-full" aria-hidden="true"></span>
-                              {vibeData.propaganda!.techniques[index].replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                            </h5>
-                            <p className="text-white/80 text-sm leading-relaxed">{explanation}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Educational Note - Enhanced */}
-                  <div className="mt-6 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg lg:col-span-3">
-                    <div className="flex items-start gap-3">
-                      <Info className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
-                      <div>
-                        <h4 className="text-blue-200 font-semibold mb-2">Educational Purpose</h4>
-                        <p className="text-blue-200/80 text-sm leading-relaxed">
-                          This analysis helps identify potential manipulation techniques for media literacy purposes. 
-                          High scores don't necessarily indicate malicious intent, but rather language patterns 
-                          commonly used in persuasive or manipulative communication. Use this as a tool for 
-                          critical thinking, not absolute judgment.
-                        </p>
-                      </div>
+                </div>
+                
+                {/* Detected Techniques */}
+                {vibeData.propaganda.techniques.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold mb-4">Detected Techniques</h3>
+                    <div className="space-y-3">
+                      {vibeData.propaganda.explanations.map((explanation, index) => (
+                        <div key={index} className="p-4 glass-card">
+                          <h4 className="text-orange-400 font-medium mb-2">
+                            {vibeData.propaganda.techniques[index].replace(/([A-Z])/g, ' $1').trim()}
+                          </h4>
+                          <p style={{ color: 'var(--text-secondary)' }}>{explanation}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-            {/* Radar Chart */}
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-              <CardHeader>
-                <CardTitle className="text-white text-2xl">
-                  {vibeData.type === 'sentence' ? 'Sentence' : 'Word'} Vibe Profile: "{vibeData.term}"
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-96">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={radarData}>
-                      <PolarGrid stroke="rgba(255,255,255,0.2)" />
-                      <PolarAngleAxis 
-                        dataKey="axis" 
-                        tick={{ 
-                          fontSize: isMobile ? 10 : 12, 
-                          fill: 'rgba(255,255,255,0.9)',
-                          fontWeight: 500
-                        }}
-                        className="select-none"
-                      />
-                      <PolarRadiusAxis 
-                        domain={[0, 100]} 
-                        tick={{ 
-                          fontSize: isMobile ? 8 : 10, 
-                          fill: 'rgba(255,255,255,0.6)'
-                        }}
-                        tickCount={6}
-                      />
-                      <Radar 
-                        name="Semantic Profile" 
-                        dataKey="score" 
-                        stroke="#10B981" 
-                        fill="#10B981" 
-                        fillOpacity={0.2} 
-                        strokeWidth={3}
-                        dot={{ 
-                          fill: '#10B981', 
-                          strokeWidth: 2, 
-                          r: isMobile ? 3 : 4,
-                          className: 'hover:r-6 transition-all duration-300'
-                        }}
-                        className="drop-shadow-lg"
-                      />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Axis Breakdown */}
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-              <CardHeader>
-                <CardTitle className="text-white text-2xl">Dimension Scores</CardTitle>
-                <p className="text-white/60 text-sm mt-2">
-                  Scores range from -100 to +100. Positive scores lean toward the first trait, negative toward the second.
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {Object.entries(vibeData.axes).map(([axis, value]) => {
-                    const axisInfo = AXES.find(a => a.key === axis)
-                    const description = AXIS_DESCRIPTIONS[axis]
-                    const isPositive = value > 0
-                    const percentage = Math.round(value * 100)
-                    const absPercentage = Math.abs(percentage)
-                    
-                    return (
-                      <div key={axis} className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-white font-semibold text-lg">
-                            {axisInfo?.label || axis}
-                          </span>
-                          <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                            Math.abs(percentage) < 10 
-                              ? 'bg-gray-500/20 text-gray-300'
-                              : isPositive 
-                                ? 'bg-emerald-500/20 text-emerald-300' 
-                                : 'bg-orange-500/20 text-orange-300'
-                          }`}>
-                            {percentage > 0 ? '+' : ''}{percentage}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center space-x-3">
-                          <span className="text-emerald-300 text-sm font-medium w-20 text-right">
-                            {axisInfo?.pos || 'Positive'}
-                          </span>
-                          <div className="flex-1 bg-gray-700 rounded-full h-3 relative">
-                            <div className="absolute inset-0 flex">
-                              <div className="w-1/2 bg-gradient-to-r from-emerald-600/30 to-gray-700"></div>
-                              <div className="w-1/2 bg-gradient-to-r from-gray-700 to-orange-600/30"></div>
-                            </div>
-                            <div 
-                              className={`absolute top-0 h-3 rounded-full transition-all duration-700 ${
-                                isPositive 
-                                  ? 'bg-emerald-500 left-1/2' 
-                                  : 'bg-orange-500 right-1/2'
-                              }`}
-                              style={{ 
-                                width: `${absPercentage/2}%`,
-                                ...(isPositive ? {} : { transform: 'translateX(100%)' })
-                              }}
-                            />
-                            <div className="absolute top-0 left-1/2 transform -translate-x-0.5 w-1 h-3 bg-white/40"></div>
-                          </div>
-                          <span className="text-orange-300 text-sm font-medium w-20">
-                            {axisInfo?.neg || 'Negative'}
-                          </span>
-                        </div>
-                        
-                        <p className="text-white/70 text-sm">
-                          {description?.description}
-                        </p>
-                        
-                        <div className="text-xs text-white/50">
-                          Tends toward: <span className={`font-semibold ${
-                            Math.abs(percentage) < 10 
-                              ? 'text-gray-300'
-                              : isPositive 
-                                ? 'text-emerald-300'
-                                : 'text-orange-300'
-                          }`}>
-                            {Math.abs(percentage) < 10 
-                              ? 'Neutral' 
-                              : isPositive 
-                                ? description?.positive || axisInfo?.pos
-                                : description?.negative || axisInfo?.neg
-                            }
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Similar Words - Enhanced UX */}
-            {vibeData.neighbors && vibeData.neighbors.length > 0 && (
-              <div className="lg:col-span-2">
-                <Card 
-                  className="bg-white/10 backdrop-blur-sm border-white/20 transition-all duration-300 hover:bg-white/15"
-                  role="region"
-                  aria-labelledby="similar-vibes-heading"
-                >
-                  <CardHeader className="pb-4">
-                    <CardTitle 
-                      className="text-white text-lg sm:text-xl lg:text-2xl" 
-                      id="similar-vibes-heading"
-                    >
-                      Similar Semantic Patterns
-                    </CardTitle>
-                    <p className="text-white/60 text-sm mt-2">
-                      Words with similar semantic embeddings to "{vibeData.term}"
-                    </p>
-                  </CardHeader>
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
-                      {vibeData.neighbors.slice(0, 18).map((neighbor, _index) => {
-                        const similarity = Math.round((1 - neighbor.distance) * 100)
-                        return (
-                          <Button
-                            key={neighbor.term}
-                            variant="outline"
-                            onClick={() => handleDemoClick(neighbor.term)}
-                            disabled={loadingState.isLoading}
-                            className="
-                              bg-white/10 hover:bg-white/20 text-white border-white/30 
-                              hover:border-emerald-400/50 transition-all duration-300
-                              focus-visible:ring-2 focus-visible:ring-emerald-400 
-                              focus-visible:ring-offset-2 focus-visible:ring-offset-transparent
-                              text-xs sm:text-sm h-auto py-2 px-2 sm:px-3 min-h-[44px]
-                              group relative overflow-hidden
-                            "
-                            aria-label={`Explore similar word: ${neighbor.term}. Similarity: ${similarity}%`}
-                            title={`Similarity: ${similarity}%`}
-                          >
-                            <span className="relative z-10 leading-tight">
-                              {neighbor.term}
-                            </span>
-                            <div 
-                              className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                              aria-hidden="true"
-                            ></div>
-                            
-                            {/* Similarity indicator */}
-                            {similarity >= 80 && (
-                              <div 
-                                className="absolute top-1 right-1 w-1.5 h-1.5 bg-emerald-400 rounded-full"
-                                aria-hidden="true"
-                                title="High similarity"
-                              ></div>
-                            )}
-                          </Button>
-                        )
-                      })}
-                    </div>
-                    
-                    {/* Show more button if there are additional neighbors */}
-                    {vibeData.neighbors.length > 18 && (
-                      <div className="mt-4 text-center">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="bg-white/5 hover:bg-white/10 text-white/70 border-white/20 hover:border-white/30 transition-all duration-300"
-                          onClick={() => {
-                            // Could implement expanding to show more results
-                            console.log('Show more similar words...')
-                          }}
-                        >
-                          +{vibeData.neighbors.length - 18} more similar words
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                )}
               </div>
             )}
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Radar Chart */}
+              <div className="glass-card-elevated p-6">
+                <CardHeader className="px-0 pt-0">
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-purple-400" />
+                    Semantic Profile
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-0 pb-0">
+                  <div className="h-96">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadarChart data={radarData}>
+                        <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                        <PolarAngleAxis 
+                          dataKey="axis" 
+                          tick={{ 
+                            fontSize: isMobile ? 10 : 12, 
+                            fill: 'var(--text-secondary)',
+                            fontWeight: 500
+                          }}
+                        />
+                        <PolarRadiusAxis 
+                          domain={[0, 100]} 
+                          tick={{ 
+                            fontSize: isMobile ? 8 : 10, 
+                            fill: 'var(--text-muted)'
+                          }}
+                          tickCount={6}
+                        />
+                        <Radar 
+                          name="Semantic Profile" 
+                          dataKey="score" 
+                          stroke="#a855f7" 
+                          fill="#7c3aed" 
+                          fillOpacity={0.3} 
+                          strokeWidth={2}
+                        />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </div>
+
+              {/* Dimension Scores */}
+              <div className="glass-card-elevated p-6">
+                <CardHeader className="px-0 pt-0">
+                  <CardTitle>Dimension Analysis</CardTitle>
+                </CardHeader>
+                <CardContent className="px-0 pb-0">
+                  <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                    {Object.entries(vibeData.axes).map(([axis, value]) => {
+                      const axisInfo = AXES.find(a => a.key === axis)
+                      const percentage = Math.round(value * 100)
+                      const absPercentage = Math.abs(percentage)
+                      const isPositive = value > 0
+                      
+                      return (
+                        <div key={axis} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-sm">
+                              {axisInfo?.label || axis}
+                            </span>
+                            <span className={`text-sm font-bold ${
+                              Math.abs(percentage) < 10 
+                                ? 'text-gray-400'
+                                : isPositive 
+                                  ? 'text-purple-400' 
+                                  : 'text-blue-400'
+                            }`}>
+                              {percentage > 0 ? '+' : ''}{percentage}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs w-20 text-right" style={{ color: 'var(--text-muted)' }}>
+                              {axisInfo?.pos}
+                            </span>
+                            <div className="flex-1 h-2 bg-gray-800 rounded-full relative">
+                              <div 
+                                className={`absolute top-0 h-2 rounded-full transition-all duration-700 ${
+                                  isPositive 
+                                    ? 'bg-gradient-to-r from-purple-600 to-purple-400 left-1/2' 
+                                    : 'bg-gradient-to-r from-blue-600 to-blue-400 right-1/2'
+                                }`}
+                                style={{ 
+                                  width: `${absPercentage/2}%`,
+                                  ...(isPositive ? {} : { transform: 'translateX(100%)' })
+                                }}
+                              />
+                              <div className="absolute top-0 left-1/2 transform -translate-x-0.5 w-0.5 h-2 bg-gray-600" />
+                            </div>
+                            <span className="text-xs w-20" style={{ color: 'var(--text-muted)' }}>
+                              {axisInfo?.neg}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </CardContent>
+              </div>
             </div>
+            
+            {/* Similar Words */}
+            {vibeData.neighbors && vibeData.neighbors.length > 0 && (
+              <div className="glass-card-elevated p-6">
+                <CardHeader className="px-0 pt-0">
+                  <CardTitle>Similar Semantic Patterns</CardTitle>
+                </CardHeader>
+                <CardContent className="px-0 pb-0">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                    {vibeData.neighbors.slice(0, 18).map((neighbor) => {
+                      const similarity = Math.round((1 - neighbor.distance) * 100)
+                      return (
+                        <Button
+                          key={neighbor.term}
+                          variant="outline"
+                          onClick={() => handleDemoClick(neighbor.term)}
+                          disabled={loadingState.isLoading}
+                          className="btn-secondary text-xs"
+                          title={`Similarity: ${similarity}%`}
+                        >
+                          {neighbor.term}
+                        </Button>
+                      )
+                    })}
+                  </div>
+                </CardContent>
+              </div>
+            )}
+            
+            {/* Export & Share */}
+            <ExportAnalysis 
+              data={vibeData}
+              term={vibeData.term}
+              type={vibeData.type || 'word'}
+            />
+            
+            {/* Analysis Suggestions */}
+            <AnalysisSuggestions
+              currentTerm={vibeData.term}
+              onSuggestionClick={handleDemoClick}
+              analysisType={vibeData.type}
+            />
             
             {/* Enhanced Results for logged-in users */}
             {user && (
@@ -1157,160 +976,34 @@ export default function HomePage() {
               />
             )}
             
-            {/* Action Buttons - Mobile Friendly */}
-            <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
+            {/* Action Buttons */}
+            <div className="flex justify-center gap-3">
               <Button
                 onClick={() => {
                   setTerm('')
                   setVibeData(null)
                   setError(null)
+                  setShowComparison(false)
                   inputRef.current?.focus()
                 }}
                 variant="outline"
-                className="bg-white/10 hover:bg-white/20 text-white border-white/30 hover:border-white/50 transition-all duration-300 focus-visible:ring-2 focus-visible:ring-cyan-400 min-h-[44px] w-full sm:w-auto"
-                aria-label="Start a new analysis"
+                className="btn-secondary"
               >
-                <Search className="h-4 w-4 mr-2" aria-hidden="true" />
+                <Search className="h-4 w-4 mr-2" />
                 New Analysis
               </Button>
               
-              {/* Analysis metadata */}
-              <div className="text-white/50 text-xs text-center">
-                Analysis completed at {new Date().toLocaleTimeString()}
-              </div>
+              <Button
+                onClick={() => setShowComparison(true)}
+                variant="outline"
+                className="btn-secondary"
+              >
+                <GitCompare className="h-4 w-4 mr-2" />
+                Compare Terms
+              </Button>
             </div>
           </section>
         )}
-        
-        {/* Information Section */}
-        <section className="max-w-6xl mx-auto mt-16 mb-12 px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* What is VibeScope */}
-            <div className="p-6 rounded-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-              <h3 className="text-xl font-semibold mb-3" style={{ color: '#67e8f9' }}>
-                🔍 What is VibeScope?
-              </h3>
-              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                VibeScope is an AI-powered semantic analysis tool that reveals the hidden emotional and contextual dimensions of language. Using advanced embeddings, it maps words and sentences across multiple semantic axes to show their deeper meanings and associations.
-              </p>
-            </div>
-
-            {/* How It Works */}
-            <div className="p-6 rounded-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-              <h3 className="text-xl font-semibold mb-3" style={{ color: '#c4b5fd' }}>
-                ⚙️ How It Works
-              </h3>
-              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                Enter any word to see its position on 12 semantic dimensions like masculine-feminine, concrete-abstract, or intense-mild. For sentences, VibeScope detects manipulation techniques, propaganda patterns, and rhetorical strategies used in persuasive communication.
-              </p>
-            </div>
-
-            {/* Why Use It */}
-            <div className="p-6 rounded-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-              <h3 className="text-xl font-semibold mb-3" style={{ color: '#f9a8d4' }}>
-                💡 Why Use VibeScope?
-              </h3>
-              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                Build media literacy, understand language bias, improve writing clarity, and detect manipulation in communication. Perfect for writers, educators, researchers, and anyone interested in the deeper patterns of language and meaning.
-              </p>
-            </div>
-          </div>
-
-          {/* Detailed Features */}
-          <div className="mt-8 p-6 rounded-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-            <h3 className="text-2xl font-semibold mb-4 text-center" style={{ color: 'white' }}>
-              Understanding the Analysis
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              <div>
-                <h4 className="text-lg font-semibold mb-3" style={{ color: '#67e8f9' }}>
-                  📊 Semantic Dimensions for Words
-                </h4>
-                <ul className="space-y-2 text-sm" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Masculine-Feminine:</strong> Gender-associated qualities and energy</li>
-                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Concrete-Abstract:</strong> Physical vs conceptual nature</li>
-                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Active-Passive:</strong> Energy level and dynamism</li>
-                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Positive-Negative:</strong> Emotional valence and sentiment</li>
-                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Complex-Simple:</strong> Sophistication and intricacy</li>
-                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Natural-Artificial:</strong> Authenticity and origin</li>
-                </ul>
-              </div>
-              
-              <div>
-                <h4 className="text-lg font-semibold mb-3" style={{ color: '#f9a8d4' }}>
-                  🛡️ Manipulation Detection for Sentences
-                </h4>
-                <ul className="space-y-2 text-sm" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Emotional Manipulation:</strong> Appeals to feelings over facts</li>
-                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Loaded Language:</strong> Words with strong emotional charge</li>
-                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>False Dichotomy:</strong> Presenting only two options</li>
-                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Bandwagon Effect:</strong> "Everyone else is doing it"</li>
-                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Fear Tactics:</strong> Using anxiety to persuade</li>
-                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Gaslighting:</strong> Making you question reality</li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="mt-6 p-4 rounded" style={{ backgroundColor: 'rgba(103, 232, 249, 0.1)', border: '1px solid rgba(103, 232, 249, 0.2)' }}>
-              <p className="text-sm text-center" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-                <strong>📚 Educational Purpose:</strong> VibeScope is designed to enhance critical thinking and media literacy. 
-                Use it to understand language patterns, not to judge or manipulate others.
-              </p>
-            </div>
-          </div>
-
-          {/* How to Interpret Results */}
-          <div className="mt-8 p-6 rounded-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-            <h3 className="text-2xl font-semibold mb-4 text-center" style={{ color: 'white' }}>
-              How to Interpret Your Results
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <div className="p-4 rounded" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
-                <h4 className="font-semibold mb-2" style={{ color: '#10B981' }}>
-                  🟢 Radar Chart
-                </h4>
-                <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                  The spider web visualization shows how a word scores on each dimension. Larger areas mean stronger associations with those qualities.
-                </p>
-              </div>
-              
-              <div className="p-4 rounded" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
-                <h4 className="font-semibold mb-2" style={{ color: '#F59E0B' }}>
-                  🟡 Dimension Scores
-                </h4>
-                <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                  Scores range from -100 to +100. Positive scores lean toward the first trait, negative toward the second. Near zero means neutral.
-                </p>
-              </div>
-              
-              <div className="p-4 rounded" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
-                <h4 className="font-semibold mb-2" style={{ color: '#EF4444' }}>
-                  🔴 Manipulation Score
-                </h4>
-                <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                  For sentences, scores above 70 indicate high manipulation, 40-70 moderate, below 40 low. Higher scores mean more persuasive tactics detected.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Footer - Enhanced */}
-        <footer className="mt-12 sm:mt-16 py-8 border-t" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
-          <div className="max-w-4xl mx-auto text-center space-y-4 px-4">
-            <p className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-              <strong>VibeScope</strong> • AI-Powered Semantic Analysis Tool
-            </p>
-            <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.4)' }}>
-              Built with Next.js, OpenAI Embeddings, and Voyage AI • For educational and research purposes only
-            </p>
-            <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.3)' }}>
-              Remember: Language is complex and context-dependent. Use these insights as one tool among many for understanding communication.
-            </p>
-          </div>
-        </footer>
       </div>
     </div>
   )

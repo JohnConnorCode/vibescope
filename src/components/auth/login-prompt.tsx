@@ -44,47 +44,36 @@ export function LoginPrompt({ isOpen, onClose, onLogin, analysisCount, remaining
 
   return (
     <div 
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 backdrop-blur-sm ${
         isClosing ? 'opacity-0' : 'opacity-100'
       }`}
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)' }}
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
       onClick={handleClose}
     >
       <div 
         className={`relative w-full max-w-lg transform transition-all duration-300 ${
-          isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
+          isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100 animate-slide-up'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Gradient border effect */}
-        <div 
-          className="p-[2px] rounded-2xl"
-          style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-          }}
-        >
-          <div 
-            className="p-8 rounded-2xl relative"
-            style={{ 
-              backgroundColor: '#1a1625',
-              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)'
-            }}
-          >
+        <div className="gradient-border">
+          <div className="glass-card-elevated backdrop-blur-xl p-8">
             {/* Close button */}
             <button
               onClick={handleClose}
-              className="absolute top-4 right-4 p-2 rounded-lg transition-colors hover:bg-white/10"
+              className="absolute top-4 right-4 p-2 rounded-lg transition-all hover:bg-white/10 hover:scale-110"
             >
-              <X className="h-5 w-5" style={{ color: 'rgba(255, 255, 255, 0.5)' }} />
+              <X className="h-5 w-5 text-white/50 hover:text-white/80" />
             </button>
 
             {/* Header with animation */}
             <div className="text-center mb-6">
-              <div className="inline-flex p-3 rounded-full mb-4" style={{ backgroundColor: 'rgba(139, 92, 246, 0.2)' }}>
-                <Lock className="h-8 w-8" style={{ color: '#8b5cf6' }} />
+              <div className="inline-flex p-3 rounded-full mb-4 bg-gradient-to-br from-purple-500/20 to-pink-500/20 animate-pulse-glow">
+                <Lock className="h-8 w-8 text-purple-400" />
               </div>
               
-              <h2 className="text-2xl font-bold mb-3" style={{ color: 'white' }}>
+              <h2 className="text-2xl font-bold mb-3 text-gradient">
                 {analysisCount === 2 
                   ? "You're getting the hang of it! 🎉"
                   : analysisCount < 5
@@ -92,14 +81,13 @@ export function LoginPrompt({ isOpen, onClose, onLogin, analysisCount, remaining
                     : `Wow! ${analysisCount} analyses completed!`}
               </h2>
               
-              <p className="text-base" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+              <p className="text-base text-white/80">
                 Create a free account to save your work and unlock powerful features
               </p>
               
               {remainingFree > 0 && remainingFree <= 5 && (
-                <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full" 
-                  style={{ backgroundColor: 'rgba(249, 168, 212, 0.2)' }}>
-                  <span className="text-sm font-medium" style={{ color: '#f9a8d4' }}>
+                <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 glass-card animate-pulse-glow">
+                  <span className="text-sm font-medium text-pink-300">
                     ⏰ Only {remainingFree} free {remainingFree === 1 ? 'analysis' : 'analyses'} left
                   </span>
                 </div>
@@ -108,46 +96,44 @@ export function LoginPrompt({ isOpen, onClose, onLogin, analysisCount, remaining
 
             {/* Benefits grid */}
             <div className="mb-8">
-              <p className="text-sm font-medium mb-4" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+              <p className="text-sm font-medium mb-4 text-white/70">
                 With a free account, you get:
               </p>
               <div className="grid grid-cols-2 gap-3">
                 {benefits.map((benefit, index) => (
                   <div 
                     key={index}
-                    className="flex items-start gap-2 p-3 rounded-lg transition-all hover:scale-[1.02]"
-                    style={{ 
-                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)'
-                    }}
+                    className="glass-card p-3 transition-all hover:scale-[1.02] hover:bg-white/10 group"
                   >
-                    <div 
-                      className="p-1.5 rounded"
-                      style={{ backgroundColor: `${benefit.color}20` }}
-                    >
-                      <benefit.icon className="h-4 w-4" style={{ color: benefit.color }} />
+                    <div className="flex items-start gap-2">
+                      <div 
+                        className="p-1.5 rounded-lg transition-colors group-hover:scale-110"
+                        style={{ backgroundColor: `${benefit.color}20` }}
+                      >
+                        <benefit.icon className="h-4 w-4" style={{ color: benefit.color }} />
+                      </div>
+                      <span className="text-sm leading-tight text-white/90">
+                        {benefit.text}
+                      </span>
                     </div>
-                    <span className="text-sm leading-tight" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-                      {benefit.text}
-                    </span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Progress visualization */}
-            <div className="mb-8 p-4 rounded-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
+            <div className="mb-8 p-4 glass-card">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                <span className="text-sm font-medium text-white/70">
                   Your Analysis Journey
                 </span>
-                <span className="text-sm font-bold" style={{ color: '#10b981' }}>
+                <span className="text-sm font-bold text-green-400">
                   {analysisCount}/10 free
                 </span>
               </div>
-              <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+              <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
                 <div 
-                  className="h-full rounded-full transition-all duration-500"
+                  className="h-full rounded-full transition-all duration-500 glow-purple"
                   style={{
                     width: `${Math.min((analysisCount / 10) * 100, 100)}%`,
                     background: analysisCount >= 8 
@@ -158,7 +144,7 @@ export function LoginPrompt({ isOpen, onClose, onLogin, analysisCount, remaining
                   }}
                 />
               </div>
-              <p className="text-xs mt-2" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+              <p className="text-xs mt-2 text-white/50">
                 {remainingFree > 0 
                   ? 'Sign up to continue beyond the free limit'
                   : 'You\'ve reached the free limit - sign up to continue!'}
@@ -169,11 +155,7 @@ export function LoginPrompt({ isOpen, onClose, onLogin, analysisCount, remaining
             <div className="space-y-3">
               <Button
                 onClick={onLogin}
-                className="w-full h-12 font-semibold text-white transition-all transform hover:scale-[1.02]"
-                style={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'
-                }}
+                className="w-full h-12 btn-primary font-semibold transition-all transform hover:scale-[1.02]"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
                 Create Free Account
@@ -181,13 +163,8 @@ export function LoginPrompt({ isOpen, onClose, onLogin, analysisCount, remaining
               
               <Button
                 onClick={onLogin}
-                variant="outline"
-                className="w-full h-11 font-medium transition-all"
-                style={{
-                  borderColor: 'rgba(255, 255, 255, 0.2)',
-                  color: 'rgba(255, 255, 255, 0.8)',
-                  backgroundColor: 'transparent'
-                }}
+                variant="ghost"
+                className="w-full h-11 glass-card hover:bg-white/10 font-medium transition-all"
               >
                 I already have an account
                 <ChevronRight className="h-4 w-4 ml-1" />
@@ -196,8 +173,7 @@ export function LoginPrompt({ isOpen, onClose, onLogin, analysisCount, remaining
               {remainingFree > 3 && (
                 <button
                   onClick={handleClose}
-                  className="w-full py-2 text-sm transition-colors hover:text-white"
-                  style={{ color: 'rgba(255, 255, 255, 0.5)' }}
+                  className="w-full py-2 text-sm text-white/50 hover:text-white/70 transition-colors"
                 >
                   Maybe later
                 </button>
@@ -205,11 +181,20 @@ export function LoginPrompt({ isOpen, onClose, onLogin, analysisCount, remaining
             </div>
 
             {/* Trust indicators */}
-            <div className="mt-6 pt-6 border-t" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
-              <div className="flex items-center justify-center gap-6 text-xs" style={{ color: 'rgba(255, 255, 255, 0.4)' }}>
-                <span>✓ No credit card required</span>
-                <span>✓ Free forever plan</span>
-                <span>✓ Export anytime</span>
+            <div className="mt-6 pt-6 border-t border-white/10">
+              <div className="flex items-center justify-center gap-6 text-xs text-white/40">
+                <span className="flex items-center gap-1">
+                  <Check className="h-3 w-3 text-green-400" />
+                  No credit card required
+                </span>
+                <span className="flex items-center gap-1">
+                  <Check className="h-3 w-3 text-green-400" />
+                  Free forever plan
+                </span>
+                <span className="flex items-center gap-1">
+                  <Check className="h-3 w-3 text-green-400" />
+                  Export anytime
+                </span>
               </div>
             </div>
           </div>
