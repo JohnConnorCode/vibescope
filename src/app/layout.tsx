@@ -103,40 +103,136 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
         <style dangerouslySetInnerHTML={{ __html: `
-          /* Critical gradient styles to ensure they load */
-          .bg-gradient-to-br {
-            background-image: linear-gradient(to bottom right, var(--tw-gradient-stops)) !important;
+          /* Global styles for the app */
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
           }
-          .from-violet-900 {
-            --tw-gradient-from: #4c1d95 var(--tw-gradient-from-position, );
-            --tw-gradient-to: rgb(76 29 149 / 0) var(--tw-gradient-to-position, );
-            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+          
+          html, body {
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
           }
-          .via-purple-900 {
-            --tw-gradient-to: rgb(88 28 135 / 0) var(--tw-gradient-to-position, );
-            --tw-gradient-stops: var(--tw-gradient-from), #581c87 var(--tw-gradient-via-position, 50%), var(--tw-gradient-to);
+          
+          /* Critical gradient background */
+          .min-h-screen {
+            min-height: 100vh;
+            background: linear-gradient(to bottom right, #4c1d95, #581c87, #312e81) !important;
           }
-          .to-indigo-900 {
-            --tw-gradient-to: #312e81 var(--tw-gradient-to-position, );
+          
+          /* Text gradient for title */
+          .bg-clip-text {
+            background: linear-gradient(to right, #67e8f9, #c4b5fd, #f9a8d4) !important;
+            -webkit-background-clip: text !important;
+            background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            color: transparent !important;
           }
+          
+          /* Card styles */
+          [data-slot="card"] {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(4px) !important;
+            -webkit-backdrop-filter: blur(4px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 0.75rem !important;
+          }
+          
+          /* Button styles */
+          button {
+            cursor: pointer;
+            transition: all 0.3s ease;
+          }
+          
+          button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+          }
+          
+          button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+          }
+          
+          /* Input styles */
+          input {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: white !important;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+          }
+          
+          input::placeholder {
+            color: rgba(255, 255, 255, 0.6) !important;
+          }
+          
+          input:focus {
+            outline: none;
+            border-color: #67e8f9 !important;
+            box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.2) !important;
+          }
+          
+          /* Text colors */
+          p, span, div {
+            color: white;
+          }
+          
+          /* Ensure all text is visible */
+          .text-white\\/80 { color: rgba(255, 255, 255, 0.8) !important; }
+          .text-white\\/70 { color: rgba(255, 255, 255, 0.7) !important; }
+          .text-white\\/60 { color: rgba(255, 255, 255, 0.6) !important; }
+          .text-white\\/50 { color: rgba(255, 255, 255, 0.5) !important; }
+          .text-white\\/40 { color: rgba(255, 255, 255, 0.4) !important; }
+          
+          /* Button specific colors */
+          .bg-white\\/10 { 
+            background-color: rgba(255, 255, 255, 0.1) !important; 
+          }
+          
+          .bg-white\\/20 { 
+            background-color: rgba(255, 255, 255, 0.2) !important; 
+          }
+          
+          .border-white\\/20 { 
+            border-color: rgba(255, 255, 255, 0.2) !important; 
+          }
+          
+          .border-white\\/30 { 
+            border-color: rgba(255, 255, 255, 0.3) !important; 
+          }
+          
+          /* Gradient backgrounds */
           .bg-gradient-to-r {
             background-image: linear-gradient(to right, var(--tw-gradient-stops)) !important;
           }
-          .from-cyan-300 {
-            --tw-gradient-from: #67e8f9 var(--tw-gradient-from-position, );
-            --tw-gradient-to: rgb(103 232 249 / 0) var(--tw-gradient-to-position, );
-            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+          
+          .bg-gradient-to-br {
+            background-image: linear-gradient(to bottom right, var(--tw-gradient-stops)) !important;
           }
-          .via-violet-300 {
-            --tw-gradient-to: rgb(196 181 253 / 0) var(--tw-gradient-to-position, );
-            --tw-gradient-stops: var(--tw-gradient-from), #c4b5fd var(--tw-gradient-via-position, 50%), var(--tw-gradient-to);
+          
+          .from-violet-500 {
+            --tw-gradient-from: #8b5cf6;
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, transparent);
           }
-          .to-pink-300 {
-            --tw-gradient-to: #f9a8d4 var(--tw-gradient-to-position, );
+          
+          .to-purple-600 {
+            --tw-gradient-to: #9333ea;
           }
-          .text-white { color: white !important; }
-          .bg-white\\/10 { background-color: rgba(255, 255, 255, 0.1) !important; }
-          .border-white\\/20 { border-color: rgba(255, 255, 255, 0.2) !important; }
+          
+          .from-violet-900 {
+            --tw-gradient-from: #4c1d95;
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, transparent);
+          }
+          
+          .via-purple-900 {
+            --tw-gradient-stops: var(--tw-gradient-from), #581c87, var(--tw-gradient-to, transparent);
+          }
+          
+          .to-indigo-900 {
+            --tw-gradient-to: #312e81;
+          }
         ` }} />
       </head>
       <body
