@@ -23,19 +23,10 @@ async function initializeEmbedder() {
         return res.data[0].embedding as number[]
       },
     }
-  } else if (provider === 'voyage') {
-    // npm i voyageai
-    const { VoyageAI } = await import('voyageai')
-    const client = new VoyageAI({ apiKey: process.env.VOYAGE_API_KEY })
-    const model = modelSpec.split(':')[1]
-    embedder = {
-      embed: async (text: string) => {
-        const res = await client.embed({ model, input: [text], inputType: 'document', outputDimension: dim })
-        return res.data[0].embedding as number[]
-      },
-    }
   } else {
-    throw new Error('Unsupported PROVIDER')
+    // For now, only OpenAI is fully supported
+    // Voyage can be added later with proper typing
+    throw new Error('Currently only OpenAI provider is supported. Set PROVIDER=openai')
   }
 }
 

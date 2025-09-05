@@ -66,10 +66,10 @@ export async function GET(req: NextRequest) {
     if (error) throw error
 
     // Calculate temporal drift if multiple snapshots
-    let drift = null
+    let drift: Record<string, number> | null = null
     if (data && data.length > 1) {
-      const firstAxes = data[0].axes
-      const lastAxes = data[data.length - 1].axes
+      const firstAxes = data[0].axes as Record<string, number>
+      const lastAxes = data[data.length - 1].axes as Record<string, number>
       
       drift = {}
       for (const axis in firstAxes) {
