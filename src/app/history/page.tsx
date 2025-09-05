@@ -54,13 +54,13 @@ export default function HistoryPage() {
     try {
       const result = await getAnalysisHistory(user.id)
       if (result.data) {
-        setAnalyses(result.data.map(item => ({
+        setAnalyses(result.data.map((item: any) => ({
           id: item.id,
-          type: item.type as 'word' | 'sentence',
-          input: item.input,
+          type: item.analysis_type as 'word' | 'sentence',
+          input: item.input_text,
           createdAt: item.created_at,
           isFavorite: item.is_favorite || false,
-          axes: item.axes as Record<string, number>,
+          axes: item.axes_scores as Record<string, number>,
           notes: item.notes || undefined,
           tags: item.tags || []
         })))

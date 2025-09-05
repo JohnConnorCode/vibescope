@@ -46,8 +46,8 @@ export function EnhancedResults({ analysisType, data, vibeData }: EnhancedResult
       neighbors: vibeData.neighbors
     }
 
-    const result = await saveAnalysis(analysisData)
-    if (result.data) {
+    const result: any = await saveAnalysis(analysisData)
+    if (result && result.data) {
       setIsSaved(true)
       setSavedId(result.data.id)
     }

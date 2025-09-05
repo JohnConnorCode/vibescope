@@ -102,6 +102,7 @@ export function useSessionTracking() {
     session,
     shouldShowLoginPrompt,
     incrementAnalysisCount,
+    trackAnalysis: incrementAnalysisCount, // Alias for compatibility
     dismissLoginPrompt,
     isAnonymous: !user,
     analysisCount: session?.analysisCount || 0,

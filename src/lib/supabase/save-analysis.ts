@@ -50,8 +50,8 @@ export async function saveAnalysis(data: AnalysisData) {
     analysisRecord.results.neighbors = data.neighbors
   }
 
-  const { data: saved, error } = await supabase
-    .from('analysis_history')
+  const { data: saved, error } = await (supabase
+    .from('analysis_history') as any)
     .insert(analysisRecord)
     .select()
     .single()
@@ -65,8 +65,8 @@ export async function saveAnalysis(data: AnalysisData) {
 }
 
 export async function toggleFavorite(analysisId: number) {
-  const { data: analysis, error: fetchError } = await supabase
-    .from('analysis_history')
+  const { data: analysis, error: fetchError } = await (supabase
+    .from('analysis_history') as any)
     .select('is_favorite')
     .eq('id', analysisId)
     .single()
@@ -75,8 +75,8 @@ export async function toggleFavorite(analysisId: number) {
     return { error: fetchError.message }
   }
 
-  const { error } = await supabase
-    .from('analysis_history')
+  const { error } = await (supabase
+    .from('analysis_history') as any)
     .update({ is_favorite: !analysis.is_favorite })
     .eq('id', analysisId)
 
@@ -94,8 +94,8 @@ export async function getRecentAnalyses(limit = 10) {
     return { error: 'User not authenticated', data: [] }
   }
 
-  const { data, error } = await supabase
-    .from('analysis_history')
+  const { data, error } = await (supabase
+    .from('analysis_history') as any)
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
@@ -116,8 +116,8 @@ export async function getUserStatistics() {
     return { error: 'User not authenticated', data: null }
   }
 
-  const { data, error } = await supabase
-    .from('user_statistics')
+  const { data, error } = await (supabase
+    .from('user_statistics') as any)
     .select('*')
     .eq('user_id', user.id)
     .single()
@@ -138,8 +138,8 @@ export async function getUserStatistics() {
 
 export async function deleteAnalysis(analysisId: number) {
   try {
-    const { error } = await supabase
-      .from('analysis_history')
+    const { error } = await (supabase
+      .from('analysis_history') as any)
       .delete()
       .eq('id', analysisId)
 
