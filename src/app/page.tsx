@@ -11,7 +11,7 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { validateInput, sanitizeInput, isSentence, validateApiResponse, createRateLimiter } from '@/lib/validation'
 import { DEMO_DATA, API_CONFIG, UI_CONFIG } from '@/lib/constants'
-import { Search, AlertCircle, Info, ArrowRight, Sparkles, Brain, Shield, LogIn, Zap, Activity, BarChart3, GitCompare, Settings } from 'lucide-react'
+import { Search, AlertCircle, Info, ArrowRight, Sparkles, Brain, Shield, LogIn, Zap, Activity, BarChart3, GitCompare, Settings, FileText, BarChart2 } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-provider'
 import { useSessionTracking } from '@/lib/hooks/useSessionTracking'
 import { LoginPrompt } from '@/components/auth/login-prompt'
@@ -488,10 +488,52 @@ export default function HomePage() {
               <span className="text-sm font-medium">Compare Mode</span>
             </Button>
           </div>
+          
+          {/* Tab Navigation */}
+          <div className="flex justify-center mb-8">
+            <div className="glass-card p-1 inline-flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setActiveTab('analyze')}
+                className={`px-6 py-2 transition-all ${
+                  activeTab === 'analyze' ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white'
+                }`}
+              >
+                <Search className="h-4 w-4 mr-2" />
+                Analyze
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setActiveTab('batch')}
+                className={`px-6 py-2 transition-all ${
+                  activeTab === 'batch' ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white'
+                }`}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Batch
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setActiveTab('insights')}
+                className={`px-6 py-2 transition-all ${
+                  activeTab === 'insights' ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white'
+                }`}
+              >
+                <BarChart2 className="h-4 w-4 mr-2" />
+                Insights
+              </Button>
+            </div>
+          </div>
         </header>
 
-        {/* Search Card */}
-        <main className="max-w-2xl mx-auto mb-8 sm:mb-12 animate-slide-up">
+        {/* Main Content Based on Active Tab */}
+        {activeTab === 'analyze' && (
+          <>
+            {/* Search Card */}
+            <main className="max-w-2xl mx-auto mb-8 sm:mb-12 animate-slide-up">
           <div className="gradient-border relative">
             <div className="glass-card-elevated backdrop-blur-xl">
               <CardContent className="p-6 sm:p-8">
@@ -644,10 +686,10 @@ export default function HomePage() {
               </CardContent>
             </div>
           </div>
-        </main>
-        
-        {/* Analysis History */}
-        {!loadingState.isLoading && !vibeData && (
+            </main>
+            
+            {/* Analysis History */}
+            {!loadingState.isLoading && !vibeData && (
           <section className="max-w-4xl mx-auto mb-8 animate-slide-up">
             <AnalysisHistory 
               onSelectItem={handleHistorySelect}
@@ -1002,6 +1044,32 @@ export default function HomePage() {
                 Compare Terms
               </Button>
             </div>
+          </section>
+        )}
+          </>
+        )}
+        
+        {/* Batch Analysis Tab */}
+        {activeTab === 'batch' && (
+          <section className="max-w-4xl mx-auto animate-slide-up">
+            <BatchAnalysis
+              onAnalyze={async (term) => {
+                const endpoint = isSentence(term)
+                  ? `/api/vibe/analyze-sentence?text=${encodeURIComponent(term)}`
+                  : `/api/vibe?term=${encodeURIComponent(term)}`
+                
+                const res = await fetch(endpoint)
+                if (!res.ok) throw new Error('Failed to analyze')
+                return await res.json()
+              }}
+            />
+          </section>
+        )}
+        
+        {/* Insights Dashboard Tab */}
+        {activeTab === 'insights' && (
+          <section className="max-w-6xl mx-auto animate-slide-up">
+            <InsightsDashboard userId={user?.id} />
           </section>
         )}
       </div>
