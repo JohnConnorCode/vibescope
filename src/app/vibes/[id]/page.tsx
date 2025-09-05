@@ -2,6 +2,9 @@
 import { Metadata } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE!
@@ -47,81 +50,101 @@ export default async function SharePage({ params }: { params: { id: string } }) 
 
   if (!data) {
     return (
-      <div className="min-h-dvh bg-neutral-950 text-neutral-100 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Vibe not found</h1>
-          <Link href="/" className="text-purple-400 hover:text-purple-300">
-            Create your own vibe →
-          </Link>
-        </div>
+      <div className="min-h-dvh bg-gradient-to-b from-background to-muted/20 text-foreground flex items-center justify-center">
+        <Card className="text-center p-8">
+          <CardContent>
+            <h1 className="text-2xl font-bold mb-4">Vibe not found</h1>
+            <Button asChild>
+              <Link href="/">
+                Create your own vibe →
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className="min-h-dvh bg-neutral-950 text-neutral-100">
+    <div className="min-h-dvh bg-gradient-to-b from-background to-muted/20 text-foreground">
       <div className="mx-auto max-w-4xl p-6 py-12">
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
             {data.term}
           </h1>
           {data.nano_summary && (
-            <p className="text-xl text-neutral-300 italic">"{data.nano_summary}"</p>
+            <Card className="max-w-2xl mx-auto bg-gradient-to-r from-purple-50/10 to-pink-50/10 border-purple-200 dark:from-purple-900/20 dark:to-pink-900/20 dark:border-purple-800">
+              <CardContent className="pt-6">
+                <p className="text-xl text-muted-foreground italic">"{data.nano_summary}"</p>
+              </CardContent>
+            </Card>
           )}
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <div className="rounded-2xl border border-neutral-800 p-6">
-            <h2 className="font-semibold mb-4 text-lg">Vibe Profile</h2>
-            <div className="space-y-3">
-              {Object.entries(data.axes_json).map(([axis, score]: [string, any]) => (
-                <div key={axis} className="flex justify-between items-center">
-                  <span className="text-neutral-400">{axis}</span>
-                  <div className="flex items-center gap-3">
-                    <div className="w-32 bg-neutral-800 rounded-full h-2 overflow-hidden">
-                      <div 
-                        className={score > 0 ? 'bg-green-500' : 'bg-red-500'}
-                        style={{ 
-                          width: `${Math.abs(score) * 50}%`,
-                          marginLeft: score < 0 ? `${50 - Math.abs(score) * 50}%` : '50%'
-                        }}
+        <div className="grid md:grid-cols-2 gap-6 mb-12">
+          <Card>
+            <CardHeader>
+              <CardTitle>Vibe Profile</CardTitle>
+              <CardDescription>Multi-dimensional analysis scores</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {Object.entries(data.axes_json).map(([axis, score]: [string, any]) => (
+                  <div key={axis} className="flex items-center justify-between">
+                    <span className="text-muted-foreground font-medium capitalize">{axis}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-32 bg-muted rounded-full h-3 overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-500 ${score > 0 ? 'bg-green-500' : 'bg-red-500'}`}
+                          style={{ 
+                            width: `${Math.abs(score) * 50}%`,
+                            marginLeft: score < 0 ? `${50 - Math.abs(score) * 50}%` : '50%'
+                          }}
                         />
+                      </div>
+                      <Badge variant={score > 0 ? 'default' : 'destructive'} className="min-w-[3rem] justify-center font-mono">
+                        {score > 0 ? '+' : ''}{(score * 100).toFixed(0)}
+                      </Badge>
                     </div>
-                    <span className={`text-sm font-mono ${score > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {(score * 100).toFixed(0)}
-                    </span>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
-          <div className="rounded-2xl border border-neutral-800 p-6">
-            <h2 className="font-semibold mb-4 text-lg">Similar Vibes</h2>
-            <div className="flex flex-wrap gap-2">
-              {data.neighbors_json.slice(0, 12).map((n: any) => (
-                <span 
-                  key={n.term}
-                  className="px-3 py-1.5 rounded-xl bg-neutral-800 text-sm"
-                >
-                  {n.term}
-                </span>
-              ))}
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Similar Vibes</CardTitle>
+              <CardDescription>Words with related semantic patterns</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {data.neighbors_json.slice(0, 12).map((n: any) => (
+                  <Badge
+                    key={n.term}
+                    variant="outline"
+                    className="text-sm py-1.5 px-3"
+                  >
+                    {n.term}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="text-center">
-          <Link 
-            href={`/?term=${encodeURIComponent(data.term)}`}
-            className="inline-block px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl font-medium"
-          >
-            Explore this vibe interactively →
-          </Link>
+        <div className="text-center mb-12">
+          <Button size="lg" asChild>
+            <Link href={`/?term=${encodeURIComponent(data.term)}`}>
+              Explore this vibe interactively →
+            </Link>
+          </Button>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-neutral-800 text-center text-neutral-500">
-          <p>Created with <Link href="/" className="text-purple-400 hover:text-purple-300">VibeScope</Link></p>
+        <div className="pt-8 border-t text-center">
+          <p className="text-muted-foreground">
+            Created with <Button variant="link" asChild className="p-0 h-auto text-primary"><Link href="/">VibeScope</Link></Button>
+          </p>
         </div>
       </div>
     </div>

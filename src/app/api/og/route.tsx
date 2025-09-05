@@ -8,8 +8,24 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const term = searchParams.get('term') || 'vibes'
-    const axes = JSON.parse(searchParams.get('axes') || '{}')
-    const neighbors = JSON.parse(searchParams.get('neighbors') || '[]').slice(0, 4)
+    
+    let axes: Record<string, number> = {}
+    let neighbors: Array<{ term: string }> = []
+    
+    try {
+      axes = JSON.parse(searchParams.get('axes') || '{}')
+    } catch (e) {
+      console.warn('Failed to parse axes JSON:', e)
+      axes = {}
+    }
+    
+    try {
+      neighbors = JSON.parse(searchParams.get('neighbors') || '[]').slice(0, 4)
+    } catch (e) {
+      console.warn('Failed to parse neighbors JSON:', e)
+      neighbors = []
+    }
+    
     const summary = searchParams.get('summary') || ''
 
     return new ImageResponse(
@@ -118,7 +134,7 @@ export async function GET(req: NextRequest) {
               >
                 <span style={{ color: '#737373', fontSize: '16px' }}>Similar vibes:</span>
                 <div style={{ display: 'flex', gap: '15px' }}>
-                  {neighbors.map((n: any) => (
+                  {neighbors.map((n) => (
                     <span
                       key={n.term}
                       style={{

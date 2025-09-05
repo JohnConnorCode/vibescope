@@ -5,13 +5,13 @@ export type Embedder = {
   embed: (text: string) => Promise<number[]>
 }
 
-const provider = process.env.PROVIDER || 'openai'
-const modelSpec = process.env.EMBEDDING_MODEL || 'openai:text-embedding-3-large'
-const dim = Number(process.env.EMBEDDING_DIM || '3072')
-
 let embedder: Embedder
 
 async function initializeEmbedder() {
+  // Read environment variables at runtime, not module load time
+  const provider = process.env.PROVIDER || 'openai'
+  const modelSpec = process.env.EMBEDDING_MODEL || 'openai:text-embedding-3-large'
+  
   if (provider === 'openai') {
     // npm i openai
     const OpenAI = (await import('openai')).default
@@ -31,7 +31,9 @@ async function initializeEmbedder() {
 }
 
 export async function embed(text: string) {
-  if (!embedder) await initializeEmbedder()
+  if (!embedder) {
+    await initializeEmbedder()
+  }
   return embedder.embed(text)
 }
 

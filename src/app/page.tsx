@@ -1,450 +1,1074 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts'
-import clsx from 'clsx'
-import { useDebounce, useVibeHistory, useVibeFavorites } from '@/lib/hooks'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { LoadingSpinner, FullAnalysisSkeleton } from '@/components/ui/loading-skeleton'
+import { AXES } from '@/lib/axes'
+import { useDebounce } from '@/hooks/useDebounce'
+import { useWindowSize } from '@/hooks/useWindowSize'
+import { validateInput, sanitizeInput, isSentence, validateApiResponse, createRateLimiter } from '@/lib/validation'
+import { DEMO_DATA, API_CONFIG, UI_CONFIG } from '@/lib/constants'
+import { Search, AlertCircle, Info, ArrowRight, Sparkles, Brain, Shield } from 'lucide-react'
 
-// Demo vibes for onboarding
-const DEMO_VIBES = ['punk', 'zen', 'capitalism', 'love', 'chaos']
-
-interface CompareBasket {
-  terms: string[]
-  data: Record<string, any>
+interface VibeData {
+  term: string
+  axes: Record<string, number>
+  neighbors?: Array<{ term: string; distance: number }>
+  type?: 'word' | 'sentence'
+  propaganda?: {
+    overallManipulation: number
+    emotionalManipulation: number
+    strategicAmbiguity: number
+    loadedLanguage: number
+    fearTactics: number
+    appealToAuthority: number
+    bandwagon: number
+    falseDichotomy: number
+    gaslighting: number
+    techniques: string[]
+    explanations: string[]
+  }
 }
 
-export default function V3Page() {
-  const [term, setTerm] = useState('')
-  const [axes, setAxes] = useState<Record<string, number> | null>(null)
-  const [neighbors, setNeighbors] = useState<Array<{ term: string; distance: number }>>([])
-  const [narrative, setNarrative] = useState<string>('')
-  const [loading, setLoading] = useState(false)
-  const [firstVisit, setFirstVisit] = useState(true)
-  
-  // Compare basket
-  const [compareBasket, setCompareBasket] = useState<CompareBasket>({ terms: [], data: {} })
-  const [showCompare, setShowCompare] = useState(false)
-  
-  // History and favorites
-  const { history, addToHistory } = useVibeHistory()
-  const { favorites, addFavorite, removeFavorite, isFavorite } = useVibeFavorites()
-  const [showHistory, setShowHistory] = useState(false)
-  
-  // Debounce the search term
-  const debouncedTerm = useDebounce(term, 400)
+interface ApiError {
+  message: string
+  code?: string
+  retryable?: boolean
+}
 
-  // Fetch vibe data
-  const fetchVibe = useCallback(async (searchTerm: string) => {
+interface LoadingState {
+  isLoading: boolean
+  isRetrying: boolean
+  progress?: string
+}
+
+// Rate limiter for API calls
+const rateLimiter = createRateLimiter(API_CONFIG.rateLimit.maxRequests, API_CONFIG.rateLimit.windowMs)
+
+const DEMO_VIBES = DEMO_DATA.words
+const DEMO_SENTENCES = DEMO_DATA.sentences
+
+const AXIS_DESCRIPTIONS: Record<string, { description: string; positive: string; negative: string }> = {
+  masculine_feminine: {
+    description: 'Gender-associated qualities and characteristics',
+    positive: 'Strong, assertive, competitive',
+    negative: 'Gentle, nurturing, collaborative'
+  },
+  concrete_abstract: {
+    description: 'How tangible vs conceptual the idea is',
+    positive: 'Physical, measurable, specific',
+    negative: 'Theoretical, conceptual, philosophical'
+  },
+  active_passive: {
+    description: 'Level of energy and initiative',
+    positive: 'Dynamic, proactive, energetic',
+    negative: 'Calm, receptive, still'
+  },
+  positive_negative: {
+    description: 'Emotional valence and feeling tone',
+    positive: 'Uplifting, optimistic, good',
+    negative: 'Sad, pessimistic, bad'
+  },
+  serious_playful: {
+    description: 'Tone and approach to life',
+    positive: 'Formal, important, grave',
+    negative: 'Fun, lighthearted, whimsical'
+  },
+  complex_simple: {
+    description: 'Level of sophistication and intricacy',
+    positive: 'Complicated, nuanced, detailed',
+    negative: 'Straightforward, basic, easy'
+  },
+  intense_mild: {
+    description: 'Strength and force of expression',
+    positive: 'Powerful, extreme, forceful',
+    negative: 'Gentle, moderate, subtle'
+  },
+  natural_artificial: {
+    description: 'Origin and authenticity',
+    positive: 'Organic, authentic, genuine',
+    negative: 'Synthetic, manufactured, fake'
+  },
+  private_public: {
+    description: 'Level of openness and visibility',
+    positive: 'Personal, intimate, hidden',
+    negative: 'Open, shared, communal'
+  },
+  high_status_low_status: {
+    description: 'Social position and prestige',
+    positive: 'Prestigious, elite, refined',
+    negative: 'Common, humble, ordinary'
+  },
+  ordered_chaotic: {
+    description: 'Level of structure and organization',
+    positive: 'Organized, systematic, controlled',
+    negative: 'Random, messy, unpredictable'
+  },
+  future_past: {
+    description: 'Temporal orientation and direction',
+    positive: 'Forward-looking, modern, progressive',
+    negative: 'Traditional, nostalgic, historical'
+  }
+}
+
+export default function HomePage() {
+  const [term, setTerm] = useState('')
+  const [vibeData, setVibeData] = useState<VibeData | null>(null)
+  const [loadingState, setLoadingState] = useState<LoadingState>({ isLoading: false, isRetrying: false })
+  const [error, setError] = useState<ApiError | null>(null)
+  const [inputError, setInputError] = useState<string>('')
+  const [isSubmissionDisabled, setIsSubmissionDisabled] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
+  
+  // Refs for accessibility and preventing double submissions
+  const submitTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  
+  // Debounced input for validation
+  const debouncedTerm = useDebounce(term, UI_CONFIG.debounceTime)
+  
+  // Window size for responsive behavior
+  const { isMobile } = useWindowSize()
+
+  // Input validation effect
+  useEffect(() => {
+    if (!debouncedTerm.trim()) {
+      setInputError('')
+      return
+    }
+    
+    const validation = validateInput(debouncedTerm)
+    if (!validation.isValid) {
+      setInputError(validation.error || 'Invalid input')
+    } else {
+      setInputError('')
+    }
+  }, [debouncedTerm])
+  
+  // Clear error when user starts typing again
+  useEffect(() => {
+    if (term !== debouncedTerm) {
+      setError(null)
+    }
+  }, [term, debouncedTerm])
+
+  const fetchVibe = useCallback(async (searchTerm: string, isRetry = false) => {
     if (!searchTerm.trim()) {
-      setAxes(null)
-      setNeighbors([])
-      setNarrative('')
+      setVibeData(null)
+      setError(null)
       return
     }
 
-    setLoading(true)
+    // Validate input first
+    const validation = validateInput(searchTerm)
+    if (!validation.isValid) {
+      setError({ message: validation.error || 'Invalid input', retryable: false })
+      return
+    }
+
+    // Rate limiting check
+    if (!rateLimiter('user')) {
+      setError({ 
+        message: 'Too many requests. Please wait a moment before trying again.', 
+        code: 'RATE_LIMITED',
+        retryable: true 
+      })
+      return
+    }
+
+    // Prevent double submissions
+    if (loadingState.isLoading && !isRetry) {
+      return
+    }
+
+    setLoadingState({ 
+      isLoading: true, 
+      isRetrying: isRetry,
+      progress: 'Preparing analysis...' 
+    })
+    setError(null)
+    
+    // Cancel any previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    
+    abortControllerRef.current = new AbortController()
+    const timeoutId = setTimeout(() => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }, API_CONFIG.timeout)
+    
     try {
-      const res = await fetch(`/api/vibe/instant?term=${encodeURIComponent(searchTerm)}`)
-      if (!res.ok) throw new Error('Failed to fetch')
+      const sanitizedTerm = validation.sanitized || searchTerm
+      const isAnalyzingSentence = isSentence(sanitizedTerm)
+      
+      setLoadingState(prev => ({ 
+        ...prev, 
+        progress: isAnalyzingSentence ? 'Analyzing sentence patterns...' : 'Processing word embeddings...' 
+      }))
+      
+      const endpoint = isAnalyzingSentence 
+        ? `/api/vibe/analyze-sentence?text=${encodeURIComponent(sanitizedTerm)}`
+        : `/api/vibe?term=${encodeURIComponent(sanitizedTerm)}`
+      
+      const res = await fetch(endpoint, {
+        signal: abortControllerRef.current.signal,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      clearTimeout(timeoutId)
+      
+      if (!res.ok) {
+        let errorData
+        try {
+          errorData = await res.json()
+        } catch {
+          errorData = { error: `HTTP ${res.status}: ${res.statusText}` }
+        }
+        
+        const isRetryable = res.status >= 500 || res.status === 429
+        throw new Error(JSON.stringify({ 
+          message: errorData.error || `Server error (${res.status})`, 
+          retryable: isRetryable,
+          status: res.status 
+        }))
+      }
+      
+      setLoadingState(prev => ({ ...prev, progress: 'Processing results...' }))
       
       const data = await res.json()
-      setAxes(data.axes)
-      setNeighbors(data.neighbors || [])
       
-      // Add to history
-      addToHistory(searchTerm, data.axes)
-      
-      // Fetch narration async (if not cached)
-      if (data.narrative) {
-        setNarrative(data.narrative)
-      } else {
-        // Fetch narration separately
-        fetch('/api/vibe/narrate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ term: searchTerm, axes: data.axes, neighbors: data.neighbors })
-        }).then(r => r.json()).then(d => {
-          if (d.narrative) setNarrative(d.narrative)
-        }).catch(() => {})
+      // Validate API response
+      const responseValidation = validateApiResponse(data)
+      if (!responseValidation.isValid) {
+        throw new Error(JSON.stringify({ 
+          message: responseValidation.error || 'Invalid response from server', 
+          retryable: false 
+        }))
       }
+      
+      setVibeData({ 
+        ...data, 
+        type: isAnalyzingSentence ? 'sentence' : 'word',
+        term: sanitizedTerm
+      })
+      setRetryCount(0)
+      
     } catch (error) {
-      console.error('Error fetching vibe:', error)
+      clearTimeout(timeoutId)
+      
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          setError({ message: 'Request was cancelled', retryable: true })
+        } else {
+          let errorInfo: ApiError
+          try {
+            errorInfo = JSON.parse(error.message)
+          } catch {
+            errorInfo = { message: error.message, retryable: true }
+          }
+          
+          console.error('Error fetching vibe:', {
+            searchTerm,
+            error: errorInfo,
+            timestamp: new Date().toISOString()
+          })
+          
+          setError({
+            message: `Failed to analyze "${searchTerm}": ${errorInfo.message}`,
+            code: errorInfo.code,
+            retryable: errorInfo.retryable !== false
+          })
+        }
+      } else {
+        setError({ message: 'An unexpected error occurred', retryable: true })
+      }
+      
+      setVibeData(null)
     } finally {
-      setLoading(false)
+      setLoadingState({ isLoading: false, isRetrying: false })
+      abortControllerRef.current = null
     }
-  }, [addToHistory])
+  }, [loadingState.isLoading])
 
-  // Auto-fetch on debounced term change
-  useEffect(() => {
-    if (debouncedTerm) {
-      fetchVibe(debouncedTerm)
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (inputError || !term.trim() || loadingState.isLoading || isSubmissionDisabled) {
+      return
     }
-  }, [debouncedTerm, fetchVibe])
-
-  // Check first visit
+    
+    // Prevent rapid submissions
+    setIsSubmissionDisabled(true)
+    if (submitTimeoutRef.current) {
+      clearTimeout(submitTimeoutRef.current)
+    }
+    
+    submitTimeoutRef.current = setTimeout(() => {
+      setIsSubmissionDisabled(false)
+    }, 1000)
+    
+    fetchVibe(term)
+  }, [term, inputError, loadingState.isLoading, isSubmissionDisabled, fetchVibe])
+  
+  const handleRetry = useCallback(() => {
+    if (retryCount < 3) {
+      setRetryCount(prev => prev + 1)
+      fetchVibe(term, true)
+    }
+  }, [term, retryCount, fetchVibe])
+  
+  const handleDemoClick = useCallback((demoTerm: string) => {
+    setTerm(demoTerm)
+    // Small delay to allow state to update
+    setTimeout(() => {
+      fetchVibe(demoTerm)
+    }, 50)
+  }, [fetchVibe])
+  
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = sanitizeInput(e.target.value)
+    setTerm(value)
+  }, [])
+  
+  // Clean up on unmount
   useEffect(() => {
-    const visited = localStorage.getItem('vibescope-visited')
-    if (visited) {
-      setFirstVisit(false)
-    } else {
-      localStorage.setItem('vibescope-visited', 'true')
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+      if (submitTimeoutRef.current) {
+        clearTimeout(submitTimeoutRef.current)
+      }
     }
   }, [])
 
-  // Add to compare basket
-  const addToBasket = (term: string) => {
-    if (!axes || compareBasket.terms.includes(term)) return
-    setCompareBasket(prev => ({
-      terms: [...prev.terms, term],
-      data: { ...prev.data, [term]: axes }
-    }))
-  }
-
-  // Remove from basket
-  const removeFromBasket = (term: string) => {
-    setCompareBasket(prev => ({
-      terms: prev.terms.filter(t => t !== term),
-      data: Object.fromEntries(Object.entries(prev.data).filter(([k]) => k !== term))
-    }))
-  }
-
-  // Quick search from history/demo
-  const quickSearch = (searchTerm: string) => {
-    setTerm(searchTerm)
-    setFirstVisit(false)
-  }
-
-  const radarData = axes ? Object.entries(axes).map(([k, v]) => ({ 
-    axis: k, 
-    score: (v + 1) * 50 
-  })) : []
-
-  // Determine axis colors
-  const axisColors: Record<string, string> = {
-    valence: '#10b981',
-    arousal: '#f59e0b', 
-    concrete: '#3b82f6',
-    formality: '#8b5cf6',
-    novelty: '#ec4899',
-    trust: '#14b8a6'
-  }
+  // Memoized radar data computation
+  const radarData = useMemo(() => {
+    if (!vibeData?.axes) return []
+    
+    return Object.entries(vibeData.axes).map(([k, v]) => {
+      const axis = AXES.find(a => a.key === k)
+      const axisLabel = axis ? axis.label.split(' (')[0] : k
+      return {
+        axis: axisLabel,
+        fullAxis: axis?.label || k,
+        score: Math.max(0, Math.min(100, (v + 1) * 50)), // Ensure 0-100 range
+        rawScore: v
+      }
+    })
+  }, [vibeData?.axes])
+  
+  // Memoized demo buttons to prevent unnecessary re-renders
+  const DemoButtons = useMemo(() => {
+    const WordDemos = () => (
+      <div className="space-y-4">
+        <div className="text-center">
+          <p className="text-white/70 text-sm mb-3 flex items-center justify-center gap-2">
+            <Brain className="h-4 w-4" aria-hidden="true" />
+            Try analyzing these words:
+          </p>
+          <div className="flex flex-wrap gap-2 justify-center">
+            {DEMO_VIBES.map(demo => (
+              <Button
+                key={demo}
+                variant="outline"
+                size="sm"
+                onClick={() => handleDemoClick(demo)}
+                disabled={loadingState.isLoading}
+                className="bg-white/10 hover:bg-white/20 text-white border-white/30 hover:border-white/50 text-sm transition-all duration-300 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent min-h-[44px] px-4"
+                aria-label={`Analyze the word ${demo}`}
+              >
+                <Sparkles className="h-3 w-3 mr-1" aria-hidden="true" />
+                {demo}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+    
+    const SentenceDemos = () => (
+      <div className="space-y-4">
+        <div className="text-center">
+          <p className="text-white/70 text-sm mb-3 flex items-center justify-center gap-2">
+            <Shield className="h-4 w-4" aria-hidden="true" />
+            Or analyze these sentences for manipulation patterns:
+          </p>
+          <div className="flex flex-col gap-2">
+            {DEMO_SENTENCES.map((demo, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                size="sm"
+                onClick={() => handleDemoClick(demo)}
+                disabled={loadingState.isLoading}
+                className="bg-white/10 hover:bg-white/20 text-white border-white/30 hover:border-white/50 text-xs px-4 py-3 h-auto whitespace-normal max-w-md mx-auto transition-all duration-300 focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent min-h-[44px]"
+                aria-label={`Analyze this sentence for manipulation patterns`}
+              >
+                <div className="flex items-start gap-2">
+                  <ArrowRight className="h-3 w-3 mt-1 flex-shrink-0" aria-hidden="true" />
+                  <span className="text-left">"{demo}"</span>
+                </div>
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+    
+    return { WordDemos, SentenceDemos }
+  }, [handleDemoClick, loadingState.isLoading])
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-950 to-neutral-900 text-neutral-100">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-neutral-950/80 backdrop-blur-md border-b border-neutral-800">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-              VibeScope
-            </h1>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowHistory(!showHistory)}
-                className="p-2 rounded-lg bg-neutral-800/50 hover:bg-neutral-700/50 transition"
-                title="History"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </button>
-              <button
-                onClick={() => setShowCompare(!showCompare)}
-                className="p-2 rounded-lg bg-neutral-800/50 hover:bg-neutral-700/50 transition relative"
-                title="Compare basket"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-                {compareBasket.terms.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-purple-600 text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {compareBasket.terms.length}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-6 max-w-6xl">
-        {/* Search Input */}
-        <div className="mb-6">
-          <div className="relative">
-            <input
-              type="text"
-              value={term}
-              onChange={(e) => setTerm(e.target.value)}
-              placeholder={firstVisit ? "Try 'punk' or 'zen' to start..." : "Type any word..."}
-              className="w-full px-6 py-4 text-lg rounded-2xl bg-neutral-800/50 border border-neutral-700 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition"
-              autoFocus
-            />
-            {loading && (
-              <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-              </div>
-            )}
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-violet-900 via-purple-900 to-indigo-900">
+      <div className="container mx-auto px-4 py-4 sm:py-8 max-w-7xl">
+        {/* Header - Mobile Responsive */}
+        <header className="text-center mb-8 sm:mb-12">
+          <h1 
+            className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-4 bg-gradient-to-r from-cyan-300 via-violet-300 to-pink-300 bg-clip-text text-transparent"
+            role="banner"
+          >
+            VibeScope
+          </h1>
+          <p className="text-base sm:text-lg lg:text-xl text-white/80 mb-6 sm:mb-8 max-w-4xl mx-auto leading-relaxed px-2">
+            Discover the hidden emotional and semantic dimensions of any word, or analyze sentences for manipulation techniques and propaganda patterns using AI embeddings
+          </p>
           
-          {/* Demo vibes for first visit */}
-          {firstVisit && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              <span className="text-sm text-neutral-500">Try:</span>
-              {DEMO_VIBES.map(demo => (
-                <button
-                  key={demo}
-                  onClick={() => quickSearch(demo)}
-                  className="px-3 py-1 text-sm rounded-full bg-neutral-800/50 hover:bg-purple-600/20 border border-neutral-700 hover:border-purple-600 transition"
-                >
-                  {demo}
-                </button>
-              ))}
+          {/* Feature highlights for better UX */}
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-6 text-xs sm:text-sm text-white/60">
+            <div className="flex items-center gap-1 px-2 py-1 bg-white/10 rounded-full">
+              <Brain className="h-3 w-3" aria-hidden="true" />
+              <span>Semantic Analysis</span>
             </div>
-          )}
-        </div>
-
-        {/* Narrative */}
-        {narrative && (
-          <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-purple-900/10 to-pink-900/10 border border-purple-800/30">
-            <p className="text-lg italic text-neutral-200">"{narrative}"</p>
+            <div className="flex items-center gap-1 px-2 py-1 bg-white/10 rounded-full">
+              <Shield className="h-3 w-3" aria-hidden="true" />
+              <span>Manipulation Detection</span>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 bg-white/10 rounded-full">
+              <Sparkles className="h-3 w-3" aria-hidden="true" />
+              <span>AI Powered</span>
+            </div>
           </div>
+        </header>
+
+        {/* Search Card - Mobile Responsive */}
+        <main className="max-w-2xl mx-auto mb-8 sm:mb-12">
+          <Card className="bg-white/10 backdrop-blur-sm border-white/20 transition-all duration-300 hover:bg-white/15">
+            <CardContent className="p-4 sm:p-6 lg:p-8">
+              <form onSubmit={handleSubmit} noValidate>
+                <div className="space-y-4">
+                  <div className="relative">
+                    <label htmlFor="analysis-input" className="sr-only">
+                      Enter word or sentence to analyze
+                    </label>
+                    <Input
+                      id="analysis-input"
+                      ref={inputRef}
+                      type="text"
+                      value={term}
+                      onChange={handleInputChange}
+                      placeholder="Enter any word or sentence to analyze..."
+                      className={`
+                        text-base sm:text-lg h-12 sm:h-16 pl-4 sm:pl-6 pr-16 sm:pr-20 
+                        bg-white/10 border-white/20 text-white placeholder:text-white/60 
+                        focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20 
+                        transition-all duration-300
+                        ${inputError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20' : ''}
+                      `}
+                      autoFocus
+                      disabled={loadingState.isLoading}
+                      autoComplete="off"
+                      spellCheck="false"
+                      aria-invalid={!!inputError}
+                      aria-describedby={inputError ? "input-error" : "input-help"}
+                      maxLength={500}
+                    />
+                    
+                    <Button 
+                      type="submit"
+                      disabled={loadingState.isLoading || !term.trim() || !!inputError || isSubmissionDisabled}
+                      className="
+                        absolute right-1 sm:right-2 top-1 sm:top-2 
+                        h-10 sm:h-12 px-3 sm:px-6 text-sm sm:text-base
+                        bg-gradient-to-r from-violet-500 to-purple-600 
+                        hover:from-violet-600 hover:to-purple-700 
+                        disabled:opacity-50 disabled:cursor-not-allowed
+                        transition-all duration-300 focus-visible:ring-2 focus-visible:ring-cyan-400
+                        min-w-[80px] sm:min-w-[100px]
+                      "
+                      aria-label="Analyze input text"
+                    >
+                      {loadingState.isLoading ? (
+                        <div className="flex items-center gap-2">
+                          <LoadingSpinner size="sm" className="text-white" />
+                          <span className="hidden sm:inline">Analyzing</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 sm:gap-2">
+                          <Search className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true" />
+                          <span>Analyze</span>
+                        </div>
+                      )}
+                    </Button>
+                  </div>
+                  
+                  {/* Input validation error */}
+                  {inputError && (
+                    <div 
+                      id="input-error"
+                      className="flex items-center gap-2 text-red-300 text-sm"
+                      role="alert"
+                      aria-live="polite"
+                    >
+                      <AlertCircle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                      <span>{inputError}</span>
+                    </div>
+                  )}
+                  
+                  {/* Loading progress */}
+                  {loadingState.isLoading && loadingState.progress && (
+                    <div 
+                      className="flex items-center gap-2 text-cyan-300 text-sm"
+                      aria-live="polite"
+                      aria-label="Analysis progress"
+                    >
+                      <LoadingSpinner size="sm" className="text-cyan-400" />
+                      <span>{loadingState.progress}</span>
+                    </div>
+                  )}
+                  
+                  {/* Helper text */}
+                  {!inputError && !loadingState.isLoading && (
+                    <p 
+                      id="input-help" 
+                      className="text-white/50 text-xs sm:text-sm flex items-center gap-2"
+                    >
+                      <Info className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
+                      Single words show semantic dimensions, sentences reveal manipulation patterns
+                    </p>
+                  )}
+                </div>
+              </form>
+
+              {/* Demo Examples - Mobile Responsive */}
+              {!vibeData && !loadingState.isLoading && (
+                <div className="mt-6 space-y-6">
+                  <DemoButtons.WordDemos />
+                  <DemoButtons.SentenceDemos />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </main>
+
+        {/* Error Message - Enhanced UX */}
+        {error && (
+          <section className="max-w-4xl mx-auto mb-6 sm:mb-8" aria-labelledby="error-heading">
+            <Alert className="bg-red-500/10 border-red-500/30 text-red-200 transition-all duration-300">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="flex-1">
+                  <h3 id="error-heading" className="font-semibold mb-2 text-red-300">
+                    Analysis Error
+                  </h3>
+                  <AlertDescription className="space-y-3">
+                    <p>{error.message}</p>
+                    
+                    {error.message.includes('API key') && (
+                      <div className="mt-3 p-3 bg-red-500/20 rounded-lg text-sm">
+                        <p className="font-medium">Configuration Issue:</p>
+                        <p>Please add your OpenAI API key to your <code className="bg-red-500/30 px-1 py-0.5 rounded font-mono">env.local</code> file.</p>
+                      </div>
+                    )}
+                    
+                    {error.code === 'RATE_LIMITED' && (
+                      <div className="mt-3 p-3 bg-orange-500/20 border border-orange-500/30 rounded-lg text-sm">
+                        <p className="font-medium text-orange-200">Rate Limit Reached</p>
+                        <p className="text-orange-300">Please wait a moment before making another request.</p>
+                      </div>
+                    )}
+                    
+                    {error.retryable && retryCount < 3 && (
+                      <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                        <Button
+                          onClick={handleRetry}
+                          size="sm"
+                          className="bg-red-600 hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-red-400"
+                          disabled={loadingState.isRetrying}
+                          aria-label={`Retry analysis. Attempt ${retryCount + 1} of 3`}
+                        >
+                          {loadingState.isRetrying ? (
+                            <>
+                              <LoadingSpinner size="sm" className="mr-2" />
+                              Retrying...
+                            </>
+                          ) : (
+                            'Try Again'
+                          )}
+                        </Button>
+                        
+                        {retryCount > 0 && (
+                          <span className="text-xs text-red-300 self-center">
+                            Attempt {retryCount + 1} of 3
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </AlertDescription>
+                </div>
+              </div>
+            </Alert>
+          </section>
         )}
 
-        {/* Main Content */}
-        {axes && (
-          <div className="grid lg:grid-cols-2 gap-6">
-            {/* Left: Radar + Bars */}
-            <div className="space-y-4">
-              {/* Radar Chart */}
-              <div className="rounded-2xl bg-neutral-800/30 border border-neutral-700/50 p-4">
-                <div className="h-72">
+        {/* Loading State - Enhanced with Skeletons */}
+        {loadingState.isLoading && (
+          <section className="max-w-6xl mx-auto mb-6 sm:mb-8" aria-labelledby="loading-heading">
+            {!vibeData ? (
+              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+                <CardContent className="p-4 sm:p-6 lg:p-8">
+                  <div className="text-center">
+                    <LoadingSpinner size="lg" className="text-cyan-400 mb-4" />
+                    <h3 id="loading-heading" className="text-white/80 text-lg mb-2">
+                      Analyzing "{term.slice(0, 50)}{term.length > 50 ? '...' : ''}"
+                    </h3>
+                    {loadingState.progress && (
+                      <p className="text-white/60 text-sm" aria-live="polite">
+                        {loadingState.progress}
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <FullAnalysisSkeleton />
+            )}
+          </section>
+        )}
+
+        {/* Results Section - Mobile Responsive & Accessible */}
+        {vibeData && (
+          <section className="max-w-6xl mx-auto space-y-6 sm:space-y-8" aria-labelledby="results-heading">
+            <div className="sr-only">
+              <h2 id="results-heading">Analysis Results for "{vibeData.term}"</h2>
+            </div>
+            
+            {/* Success feedback */}
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-600/20 border border-green-500/30 rounded-full text-green-200 text-sm">
+                <div className="w-2 h-2 bg-green-400 rounded-full" aria-hidden="true"></div>
+                <span>Analysis complete</span>
+              </div>
+            </div>
+            
+            {/* Propaganda Analysis Card - Show only for sentences */}
+            {vibeData.type === 'sentence' && vibeData.propaganda && (
+              <Card 
+                className="bg-gradient-to-r from-red-900/20 via-orange-900/20 to-yellow-900/20 backdrop-blur-sm border-orange-500/30 transition-all duration-300 hover:border-orange-400/40"
+                role="region"
+                aria-labelledby="propaganda-analysis-heading"
+              >
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-white text-xl sm:text-2xl flex items-center gap-2" id="propaganda-analysis-heading">
+                    <span className="text-orange-400" role="img" aria-label="Warning">⚠️</span>
+                    Manipulation & Propaganda Analysis
+                  </CardTitle>
+                  <p className="text-white/70 text-sm leading-relaxed">
+                    Educational analysis of potential manipulation techniques detected in the sentence. 
+                    This helps build media literacy skills.
+                  </p>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {/* Overall Manipulation Score */}
+                    <div className="text-center p-4 bg-black/20 rounded-lg" role="region" aria-labelledby="overall-score">
+                      <div 
+                        className={`text-3xl sm:text-4xl font-bold mb-2 transition-colors duration-300 ${
+                          vibeData.propaganda.overallManipulation > 70 ? 'text-red-400' :
+                          vibeData.propaganda.overallManipulation > 40 ? 'text-orange-400' : 'text-green-400'
+                        }`}
+                        aria-label={`Overall manipulation score: ${Math.round(vibeData.propaganda.overallManipulation)} out of 100`}
+                      >
+                        {Math.round(vibeData.propaganda.overallManipulation)}
+                        <span className="text-lg text-white/60">/100</span>
+                      </div>
+                      <div id="overall-score" className="text-white/80 text-sm font-semibold">
+                        Overall Manipulation Score
+                      </div>
+                      <div className="text-xs text-white/50 mt-1">
+                        {vibeData.propaganda.overallManipulation > 70 ? 'High concern' :
+                         vibeData.propaganda.overallManipulation > 40 ? 'Moderate concern' : 'Low concern'}
+                      </div>
+                    </div>
+
+                    {/* Individual Scores - Accessible & Mobile-friendly */}
+                    {[
+                      { key: 'emotionalManipulation', label: 'Emotional Manipulation', description: 'Use of emotions to influence rather than facts' },
+                      { key: 'strategicAmbiguity', label: 'Strategic Ambiguity', description: 'Deliberately vague language' },
+                      { key: 'loadedLanguage', label: 'Loaded Language', description: 'Words with strong emotional associations' },
+                      { key: 'fearTactics', label: 'Fear Tactics', description: 'Appeals to fear or anxiety' },
+                      { key: 'appealToAuthority', label: 'Appeal to Authority', description: 'Reliance on authority rather than evidence' },
+                      { key: 'bandwagon', label: 'Bandwagon Effect', description: 'Everyone else is doing it argument' },
+                      { key: 'falseDichotomy', label: 'False Dichotomy', description: 'Presenting only two options when more exist' },
+                      { key: 'gaslighting', label: 'Gaslighting', description: 'Making someone question their own reality' }
+                    ].map(({ key, label, description }) => {
+                      const score = Math.round((vibeData.propaganda as any)[key])
+                      if (score === 0) return null
+                      
+                      return (
+                        <div 
+                          key={key} 
+                          className="bg-black/20 rounded-lg p-3 transition-all duration-300 hover:bg-black/30"
+                          role="region"
+                          aria-labelledby={`score-${key}-label`}
+                        >
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1 mr-2">
+                              <span id={`score-${key}-label`} className="text-white text-sm font-medium block">
+                                {label}
+                              </span>
+                              <span className="text-white/50 text-xs block mt-1">
+                                {description}
+                              </span>
+                            </div>
+                            <span 
+                              className={`text-sm font-bold px-2 py-1 rounded shrink-0 ${
+                                score > 70 ? 'bg-red-500/20 text-red-300' :
+                                score > 40 ? 'bg-orange-500/20 text-orange-300' : 'bg-green-500/20 text-green-300'
+                              }`}
+                              aria-label={`Score: ${score} out of 100`}
+                            >
+                              {score}
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+                            <div 
+                              className={`h-2 rounded-full transition-all duration-1000 ease-out ${
+                                score > 70 ? 'bg-red-500' :
+                                score > 40 ? 'bg-orange-500' : 'bg-green-500'
+                              }`}
+                              style={{ width: `${Math.min(score, 100)}%` }}
+                              role="progressbar"
+                              aria-valuenow={score}
+                              aria-valuemin={0}
+                              aria-valuemax={100}
+                              aria-label={`${label}: ${score} out of 100`}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Detected Techniques - Enhanced Layout */}
+                  {vibeData.propaganda.techniques.length > 0 && (
+                    <div className="mt-6 lg:col-span-3">
+                      <h4 className="text-white text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span role="img" aria-label="Detection">🔍</span>
+                        Detected Manipulation Techniques
+                      </h4>
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                        {vibeData.propaganda.explanations.map((explanation, index) => (
+                          <div 
+                            key={index} 
+                            className="bg-black/20 rounded-lg p-4 transition-all duration-300 hover:bg-black/30 border border-transparent hover:border-orange-500/20"
+                            role="article"
+                            aria-labelledby={`technique-${index}-title`}
+                          >
+                            <h5 
+                              id={`technique-${index}-title`}
+                              className="text-orange-300 text-sm font-medium mb-2 flex items-center gap-2"
+                            >
+                              <span className="w-1.5 h-1.5 bg-orange-400 rounded-full" aria-hidden="true"></span>
+                              {vibeData.propaganda!.techniques[index].replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                            </h5>
+                            <p className="text-white/80 text-sm leading-relaxed">{explanation}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Educational Note - Enhanced */}
+                  <div className="mt-6 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg lg:col-span-3">
+                    <div className="flex items-start gap-3">
+                      <Info className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                      <div>
+                        <h4 className="text-blue-200 font-semibold mb-2">Educational Purpose</h4>
+                        <p className="text-blue-200/80 text-sm leading-relaxed">
+                          This analysis helps identify potential manipulation techniques for media literacy purposes. 
+                          High scores don't necessarily indicate malicious intent, but rather language patterns 
+                          commonly used in persuasive or manipulative communication. Use this as a tool for 
+                          critical thinking, not absolute judgment.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+            {/* Radar Chart */}
+            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white text-2xl">
+                  {vibeData.type === 'sentence' ? 'Sentence' : 'Word'} Vibe Profile: "{vibeData.term}"
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-96">
                   <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={radarData} outerRadius="80%">
-                      <PolarGrid stroke="#525252" />
-                      <PolarAngleAxis dataKey="axis" stroke="#a3a3a3" tick={{ fontSize: 12 }} />
-                      <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#525252" />
+                    <RadarChart data={radarData}>
+                      <PolarGrid stroke="rgba(255,255,255,0.2)" />
+                      <PolarAngleAxis 
+                        dataKey="axis" 
+                        tick={{ 
+                          fontSize: isMobile ? 10 : 12, 
+                          fill: 'rgba(255,255,255,0.9)',
+                          fontWeight: 500
+                        }}
+                        className="select-none"
+                      />
+                      <PolarRadiusAxis 
+                        domain={[0, 100]} 
+                        tick={{ 
+                          fontSize: isMobile ? 8 : 10, 
+                          fill: 'rgba(255,255,255,0.6)'
+                        }}
+                        tickCount={6}
+                      />
                       <Radar 
-                        name="vibe" 
+                        name="Semantic Profile" 
                         dataKey="score" 
-                        stroke="#a855f7" 
-                        fill="#a855f7" 
-                        fillOpacity={0.6} 
+                        stroke="#10B981" 
+                        fill="#10B981" 
+                        fillOpacity={0.2} 
+                        strokeWidth={3}
+                        dot={{ 
+                          fill: '#10B981', 
+                          strokeWidth: 2, 
+                          r: isMobile ? 3 : 4,
+                          className: 'hover:r-6 transition-all duration-300'
+                        }}
+                        className="drop-shadow-lg"
                       />
                     </RadarChart>
                   </ResponsiveContainer>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              {/* Bar Sliders */}
-              <div className="rounded-2xl bg-neutral-800/30 border border-neutral-700/50 p-4">
-                <h3 className="text-sm font-medium text-neutral-400 mb-3">Vibe Breakdown</h3>
-                <div className="space-y-3">
-                  {Object.entries(axes).map(([axis, value]) => (
-                    <div key={axis} className="flex items-center gap-3">
-                      <span 
-                        className="w-20 text-sm text-neutral-400 capitalize"
-                        style={{ color: axisColors[axis] || '#a3a3a3' }}
-                      >
-                        {axis}
-                      </span>
-                      <div className="flex-1 flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-neutral-700 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full transition-all duration-500 ease-out"
-                            style={{
-                              width: `${Math.abs(value) * 50}%`,
-                              marginLeft: value < 0 ? `${50 - Math.abs(value) * 50}%` : '50%',
-                              backgroundColor: value > 0 ? '#10b981' : '#ef4444'
-                            }}
-                          />
+            {/* Axis Breakdown */}
+            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white text-2xl">Dimension Scores</CardTitle>
+                <p className="text-white/60 text-sm mt-2">
+                  Scores range from -100 to +100. Positive scores lean toward the first trait, negative toward the second.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {Object.entries(vibeData.axes).map(([axis, value]) => {
+                    const axisInfo = AXES.find(a => a.key === axis)
+                    const description = AXIS_DESCRIPTIONS[axis]
+                    const isPositive = value > 0
+                    const percentage = Math.round(value * 100)
+                    const absPercentage = Math.abs(percentage)
+                    
+                    return (
+                      <div key={axis} className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-white font-semibold text-lg">
+                            {axisInfo?.label || axis}
+                          </span>
+                          <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                            Math.abs(percentage) < 10 
+                              ? 'bg-gray-500/20 text-gray-300'
+                              : isPositive 
+                                ? 'bg-emerald-500/20 text-emerald-300' 
+                                : 'bg-orange-500/20 text-orange-300'
+                          }`}>
+                            {percentage > 0 ? '+' : ''}{percentage}
+                          </span>
                         </div>
-                        <span className={clsx(
-                          "text-xs font-mono w-10 text-right",
-                          value > 0 ? 'text-green-400' : 'text-red-400'
-                        )}>
-                          {value > 0 ? '+' : ''}{(value * 100).toFixed(0)}
-                        </span>
+                        
+                        <div className="flex items-center space-x-3">
+                          <span className="text-emerald-300 text-sm font-medium w-20 text-right">
+                            {axisInfo?.pos || 'Positive'}
+                          </span>
+                          <div className="flex-1 bg-gray-700 rounded-full h-3 relative">
+                            <div className="absolute inset-0 flex">
+                              <div className="w-1/2 bg-gradient-to-r from-emerald-600/30 to-gray-700"></div>
+                              <div className="w-1/2 bg-gradient-to-r from-gray-700 to-orange-600/30"></div>
+                            </div>
+                            <div 
+                              className={`absolute top-0 h-3 rounded-full transition-all duration-700 ${
+                                isPositive 
+                                  ? 'bg-emerald-500 left-1/2' 
+                                  : 'bg-orange-500 right-1/2'
+                              }`}
+                              style={{ 
+                                width: `${absPercentage/2}%`,
+                                ...(isPositive ? {} : { transform: 'translateX(100%)' })
+                              }}
+                            />
+                            <div className="absolute top-0 left-1/2 transform -translate-x-0.5 w-1 h-3 bg-white/40"></div>
+                          </div>
+                          <span className="text-orange-300 text-sm font-medium w-20">
+                            {axisInfo?.neg || 'Negative'}
+                          </span>
+                        </div>
+                        
+                        <p className="text-white/70 text-sm">
+                          {description?.description}
+                        </p>
+                        
+                        <div className="text-xs text-white/50">
+                          Tends toward: <span className={`font-semibold ${
+                            Math.abs(percentage) < 10 
+                              ? 'text-gray-300'
+                              : isPositive 
+                                ? 'text-emerald-300'
+                                : 'text-orange-300'
+                          }`}>
+                            {Math.abs(percentage) < 10 
+                              ? 'Neutral' 
+                              : isPositive 
+                                ? description?.positive || axisInfo?.pos
+                                : description?.negative || axisInfo?.neg
+                            }
+                          </span>
+                        </div>
                       </div>
+                    )
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Similar Words - Enhanced UX */}
+            {vibeData.neighbors && vibeData.neighbors.length > 0 && (
+              <div className="lg:col-span-2">
+                <Card 
+                  className="bg-white/10 backdrop-blur-sm border-white/20 transition-all duration-300 hover:bg-white/15"
+                  role="region"
+                  aria-labelledby="similar-vibes-heading"
+                >
+                  <CardHeader className="pb-4">
+                    <CardTitle 
+                      className="text-white text-lg sm:text-xl lg:text-2xl" 
+                      id="similar-vibes-heading"
+                    >
+                      Similar Semantic Patterns
+                    </CardTitle>
+                    <p className="text-white/60 text-sm mt-2">
+                      Words with similar semantic embeddings to "{vibeData.term}"
+                    </p>
+                  </CardHeader>
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
+                      {vibeData.neighbors.slice(0, 18).map((neighbor, _index) => {
+                        const similarity = Math.round((1 - neighbor.distance) * 100)
+                        return (
+                          <Button
+                            key={neighbor.term}
+                            variant="outline"
+                            onClick={() => handleDemoClick(neighbor.term)}
+                            disabled={loadingState.isLoading}
+                            className="
+                              bg-white/10 hover:bg-white/20 text-white border-white/30 
+                              hover:border-emerald-400/50 transition-all duration-300
+                              focus-visible:ring-2 focus-visible:ring-emerald-400 
+                              focus-visible:ring-offset-2 focus-visible:ring-offset-transparent
+                              text-xs sm:text-sm h-auto py-2 px-2 sm:px-3 min-h-[44px]
+                              group relative overflow-hidden
+                            "
+                            aria-label={`Explore similar word: ${neighbor.term}. Similarity: ${similarity}%`}
+                            title={`Similarity: ${similarity}%`}
+                          >
+                            <span className="relative z-10 leading-tight">
+                              {neighbor.term}
+                            </span>
+                            <div 
+                              className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                              aria-hidden="true"
+                            ></div>
+                            
+                            {/* Similarity indicator */}
+                            {similarity >= 80 && (
+                              <div 
+                                className="absolute top-1 right-1 w-1.5 h-1.5 bg-emerald-400 rounded-full"
+                                aria-hidden="true"
+                                title="High similarity"
+                              ></div>
+                            )}
+                          </Button>
+                        )
+                      })}
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => axes && term && addFavorite(term, axes, narrative)}
-                  disabled={!term || isFavorite(term)}
-                  className={clsx(
-                    "flex-1 py-2 rounded-lg transition flex items-center justify-center gap-2",
-                    isFavorite(term) 
-                      ? "bg-neutral-700 text-neutral-500 cursor-not-allowed" 
-                      : "bg-purple-600/20 hover:bg-purple-600/30 border border-purple-600/50"
-                  )}
-                >
-                  <svg className="w-4 h-4" fill={isFavorite(term) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  {isFavorite(term) ? 'Favorited' : 'Favorite'}
-                </button>
-                <button
-                  onClick={() => addToBasket(term)}
-                  disabled={compareBasket.terms.includes(term)}
-                  className={clsx(
-                    "flex-1 py-2 rounded-lg transition",
-                    compareBasket.terms.includes(term)
-                      ? "bg-neutral-700 text-neutral-500 cursor-not-allowed"
-                      : "bg-neutral-800 hover:bg-neutral-700"
-                  )}
-                >
-                  {compareBasket.terms.includes(term) ? 'In basket' : 'Add to compare'}
-                </button>
-              </div>
-            </div>
-
-            {/* Right: Neighbors */}
-            <div className="space-y-4">
-              <div className="rounded-2xl bg-neutral-800/30 border border-neutral-700/50 p-4">
-                <h3 className="text-sm font-medium text-neutral-400 mb-3">Similar Vibes</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {neighbors.map((n: any) => (
-                    <button
-                      key={n.term}
-                      onClick={() => quickSearch(n.term)}
-                      className="px-3 py-2 text-sm rounded-lg bg-neutral-800/50 hover:bg-purple-600/20 border border-neutral-700 hover:border-purple-600 transition"
-                    >
-                      {n.term}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Recent History */}
-              {history.length > 0 && (
-                <div className="rounded-2xl bg-neutral-800/30 border border-neutral-700/50 p-4">
-                  <h3 className="text-sm font-medium text-neutral-400 mb-3">Recent</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {history.slice(0, 6).map(h => (
-                      <button
-                        key={h.timestamp}
-                        onClick={() => quickSearch(h.term)}
-                        className="px-2 py-1 text-xs rounded bg-neutral-800 hover:bg-neutral-700 transition"
-                      >
-                        {h.term}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Favorites Preview */}
-              {favorites.length > 0 && (
-                <div className="rounded-2xl bg-neutral-800/30 border border-neutral-700/50 p-4">
-                  <h3 className="text-sm font-medium text-neutral-400 mb-3">Favorites</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {favorites.slice(0, 6).map(f => (
-                      <button
-                        key={f.term}
-                        onClick={() => quickSearch(f.term)}
-                        className="px-2 py-1 text-xs rounded bg-purple-900/30 hover:bg-purple-900/50 border border-purple-700/50 transition"
-                      >
-                        {f.term}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </main>
-
-      {/* Compare Basket Modal */}
-      {showCompare && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowCompare(false)}>
-          <div className="bg-neutral-900 rounded-2xl p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
-            <h3 className="text-xl font-semibold mb-4">Compare Basket</h3>
-            {compareBasket.terms.length === 0 ? (
-              <p className="text-neutral-400">Add terms to compare their vibes</p>
-            ) : (
-              <div className="space-y-2 mb-4">
-                {compareBasket.terms.map(t => (
-                  <div key={t} className="flex items-center justify-between p-2 rounded-lg bg-neutral-800">
-                    <span>{t}</span>
-                    <button
-                      onClick={() => removeFromBasket(t)}
-                      className="text-red-400 hover:text-red-300"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
+                    
+                    {/* Show more button if there are additional neighbors */}
+                    {vibeData.neighbors.length > 18 && (
+                      <div className="mt-4 text-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="bg-white/5 hover:bg-white/10 text-white/70 border-white/20 hover:border-white/30 transition-all duration-300"
+                          onClick={() => {
+                            // Could implement expanding to show more results
+                            console.log('Show more similar words...')
+                          }}
+                        >
+                          +{vibeData.neighbors.length - 18} more similar words
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             )}
-            {compareBasket.terms.length >= 2 && (
-              <button
-                onClick={() => {
-                  // Navigate to compare view
-                  window.location.href = `/compare?terms=${compareBasket.terms.join(',')}`
-                }}
-                className="w-full py-2 bg-purple-600 hover:bg-purple-500 rounded-lg"
-              >
-                Compare {compareBasket.terms.length} terms
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* History Modal */}
-      {showHistory && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowHistory(false)}>
-          <div className="bg-neutral-900 rounded-2xl p-6 max-w-2xl w-full max-h-[70vh] overflow-auto" onClick={e => e.stopPropagation()}>
-            <h3 className="text-xl font-semibold mb-4">History & Favorites</h3>
+            </div>
             
-            {favorites.length > 0 && (
-              <>
-                <h4 className="text-sm font-medium text-neutral-400 mb-2">Favorites</h4>
-                <div className="grid grid-cols-2 gap-2 mb-6">
-                  {favorites.map(f => (
-                    <button
-                      key={f.term}
-                      onClick={() => {
-                        quickSearch(f.term)
-                        setShowHistory(false)
-                      }}
-                      className="p-3 rounded-lg bg-purple-900/20 hover:bg-purple-900/30 border border-purple-700/50 text-left"
-                    >
-                      <div className="font-medium">{f.term}</div>
-                      {f.narrative && (
-                        <div className="text-xs text-neutral-400 mt-1 line-clamp-2">{f.narrative}</div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-
-            <h4 className="text-sm font-medium text-neutral-400 mb-2">Recent Searches</h4>
-            <div className="space-y-1">
-              {history.map(h => (
-                <button
-                  key={h.timestamp}
-                  onClick={() => {
-                    quickSearch(h.term)
-                    setShowHistory(false)
-                  }}
-                  className="w-full p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-left flex justify-between items-center"
-                >
-                  <span>{h.term}</span>
-                  <span className="text-xs text-neutral-500">
-                    {new Date(h.timestamp).toLocaleDateString()}
-                  </span>
-                </button>
-              ))}
+            {/* Action Buttons - Mobile Friendly */}
+            <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
+              <Button
+                onClick={() => {
+                  setTerm('')
+                  setVibeData(null)
+                  setError(null)
+                  inputRef.current?.focus()
+                }}
+                variant="outline"
+                className="bg-white/10 hover:bg-white/20 text-white border-white/30 hover:border-white/50 transition-all duration-300 focus-visible:ring-2 focus-visible:ring-cyan-400 min-h-[44px] w-full sm:w-auto"
+                aria-label="Start a new analysis"
+              >
+                <Search className="h-4 w-4 mr-2" aria-hidden="true" />
+                New Analysis
+              </Button>
+              
+              {/* Analysis metadata */}
+              <div className="text-white/50 text-xs text-center">
+                Analysis completed at {new Date().toLocaleTimeString()}
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </section>
+        )}
+        
+        {/* Footer - Minimal */}
+        <footer className="mt-12 sm:mt-16 text-center text-white/40 text-xs">
+          <p>VibeScope uses AI to analyze semantic patterns and manipulation techniques for educational purposes.</p>
+        </footer>
+      </div>
     </div>
   )
 }

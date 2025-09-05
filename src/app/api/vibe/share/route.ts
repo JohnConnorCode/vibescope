@@ -1,10 +1,6 @@
 // src/app/api/vibe/share/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE!
-const supabase = createClient(url, serviceKey)
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,8 +10,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required data' }, { status: 400 })
     }
 
-    // Generate share ID
-    const shareId = Math.random().toString(36).substring(2, 15)
+    // Generate secure share ID
+    const shareId = crypto.randomUUID().substring(0, 13)
     
     // Build OG image URL
     const ogImageUrl = `/api/og?${new URLSearchParams({
@@ -26,6 +22,7 @@ export async function POST(req: NextRequest) {
     }).toString()}`
 
     // Store share card
+    const supabase = supabaseAdmin()
     const { data, error } = await supabase.from('share_cards').insert({
       id: shareId,
       term,

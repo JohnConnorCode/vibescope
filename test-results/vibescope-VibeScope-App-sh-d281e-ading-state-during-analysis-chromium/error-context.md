@@ -1,0 +1,205 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - banner [ref=e5]: VibeScope
+      - paragraph [ref=e6]: Discover the hidden emotional and semantic dimensions of any word, or analyze sentences for manipulation techniques and propaganda patterns using AI embeddings
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - img [ref=e9]
+          - generic [ref=e17]: Semantic Analysis
+        - generic [ref=e18]:
+          - img [ref=e19]
+          - generic [ref=e21]: Manipulation Detection
+        - generic [ref=e22]:
+          - img [ref=e23]
+          - generic [ref=e26]: AI Powered
+    - main [ref=e27]:
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - generic [ref=e33]: Enter word or sentence to analyze
+          - textbox "Enter word or sentence to analyze" [ref=e34]: wonder
+          - button "Analyze input text" [ref=e35]:
+            - generic [ref=e36]:
+              - img
+              - generic [ref=e37]: Analyze
+        - paragraph [ref=e38]:
+          - img [ref=e39]
+          - text: Single words show semantic dimensions, sentences reveal manipulation patterns
+    - region "Analysis Results for \"wonder\"" [ref=e41]:
+      - heading "Analysis Results for \"wonder\"" [level=2] [ref=e43]
+      - generic [ref=e47]: Analysis complete
+      - generic [ref=e48]:
+        - generic [ref=e49]:
+          - generic [ref=e51]: "Word Vibe Profile: \"wonder\""
+          - application [ref=e56]:
+            - generic [ref=e75]:
+              - generic [ref=e78]: Gender
+              - generic [ref=e82]: Tangibility
+              - generic [ref=e86]: Energy
+              - generic [ref=e89]: Valence
+              - generic [ref=e93]: Tone
+              - generic [ref=e97]: Complexity
+              - generic [ref=e100]: Intensity
+              - generic [ref=e104]: Origin
+              - generic [ref=e108]: Visibility
+              - generic [ref=e111]: Status
+              - generic [ref=e115]: Structure
+              - generic [ref=e119]: Time
+            - generic [ref=e121]:
+              - generic [ref=e124]: "0"
+              - generic [ref=e127]: "20"
+              - generic [ref=e130]: "40"
+              - generic [ref=e133]: "60"
+              - generic [ref=e136]: "80"
+              - generic [ref=e139]: "100"
+        - generic [ref=e156]:
+          - generic [ref=e157]:
+            - generic [ref=e158]: Dimension Scores
+            - paragraph [ref=e159]: Scores range from -100 to +100. Positive scores lean toward the first trait, negative toward the second.
+          - generic [ref=e161]:
+            - generic [ref=e162]:
+              - generic [ref=e163]:
+                - generic [ref=e164]: Gender (masculine ↔ feminine)
+                - generic [ref=e165]: "+47"
+              - generic [ref=e166]:
+                - generic [ref=e167]: masculine
+                - generic [ref=e174]: feminine
+              - paragraph [ref=e175]: Gender-associated qualities and characteristics
+              - generic [ref=e176]:
+                - text: "Tends toward:"
+                - generic [ref=e177]: Strong, assertive, competitive
+            - generic [ref=e178]:
+              - generic [ref=e179]:
+                - generic [ref=e180]: Tangibility (concrete ↔ abstract)
+                - generic [ref=e181]: "+99"
+              - generic [ref=e182]:
+                - generic [ref=e183]: concrete
+                - generic [ref=e190]: abstract
+              - paragraph [ref=e191]: How tangible vs conceptual the idea is
+              - generic [ref=e192]:
+                - text: "Tends toward:"
+                - generic [ref=e193]: Physical, measurable, specific
+            - generic [ref=e194]:
+              - generic [ref=e195]:
+                - generic [ref=e196]: Energy (active ↔ passive)
+                - generic [ref=e197]: "+22"
+              - generic [ref=e198]:
+                - generic [ref=e199]: active
+                - generic [ref=e206]: passive
+              - paragraph [ref=e207]: Level of energy and initiative
+              - generic [ref=e208]:
+                - text: "Tends toward:"
+                - generic [ref=e209]: Dynamic, proactive, energetic
+            - generic [ref=e210]:
+              - generic [ref=e211]:
+                - generic [ref=e212]: Valence (positive ↔ negative)
+                - generic [ref=e213]: "-66"
+              - generic [ref=e214]:
+                - generic [ref=e215]: positive
+                - generic [ref=e222]: negative
+              - paragraph [ref=e223]: Emotional valence and feeling tone
+              - generic [ref=e224]:
+                - text: "Tends toward:"
+                - generic [ref=e225]: Sad, pessimistic, bad
+            - generic [ref=e226]:
+              - generic [ref=e227]:
+                - generic [ref=e228]: Tone (serious ↔ playful)
+                - generic [ref=e229]: "+68"
+              - generic [ref=e230]:
+                - generic [ref=e231]: serious
+                - generic [ref=e238]: playful
+              - paragraph [ref=e239]: Tone and approach to life
+              - generic [ref=e240]:
+                - text: "Tends toward:"
+                - generic [ref=e241]: Formal, important, grave
+            - generic [ref=e242]:
+              - generic [ref=e243]:
+                - generic [ref=e244]: Complexity (complex ↔ simple)
+                - generic [ref=e245]: "+94"
+              - generic [ref=e246]:
+                - generic [ref=e247]: complex
+                - generic [ref=e254]: simple
+              - paragraph [ref=e255]: Level of sophistication and intricacy
+              - generic [ref=e256]:
+                - text: "Tends toward:"
+                - generic [ref=e257]: Complicated, nuanced, detailed
+            - generic [ref=e258]:
+              - generic [ref=e259]:
+                - generic [ref=e260]: Intensity (intense ↔ mild)
+                - generic [ref=e261]: "-6"
+              - generic [ref=e262]:
+                - generic [ref=e263]: intense
+                - generic [ref=e270]: mild
+              - paragraph [ref=e271]: Strength and force of expression
+              - generic [ref=e272]:
+                - text: "Tends toward:"
+                - generic [ref=e273]: Neutral
+            - generic [ref=e274]:
+              - generic [ref=e275]:
+                - generic [ref=e276]: Origin (natural ↔ artificial)
+                - generic [ref=e277]: "-34"
+              - generic [ref=e278]:
+                - generic [ref=e279]: natural
+                - generic [ref=e286]: artificial
+              - paragraph [ref=e287]: Origin and authenticity
+              - generic [ref=e288]:
+                - text: "Tends toward:"
+                - generic [ref=e289]: Synthetic, manufactured, fake
+            - generic [ref=e290]:
+              - generic [ref=e291]:
+                - generic [ref=e292]: Visibility (private ↔ public)
+                - generic [ref=e293]: "+84"
+              - generic [ref=e294]:
+                - generic [ref=e295]: private
+                - generic [ref=e302]: public
+              - paragraph [ref=e303]: Level of openness and visibility
+              - generic [ref=e304]:
+                - text: "Tends toward:"
+                - generic [ref=e305]: Personal, intimate, hidden
+            - generic [ref=e306]:
+              - generic [ref=e307]:
+                - generic [ref=e308]: Status (high-status ↔ low-status)
+                - generic [ref=e309]: "+83"
+              - generic [ref=e310]:
+                - generic [ref=e311]: high-status
+                - generic [ref=e318]: low-status
+              - paragraph [ref=e319]: Social position and prestige
+              - generic [ref=e320]:
+                - text: "Tends toward:"
+                - generic [ref=e321]: Prestigious, elite, refined
+            - generic [ref=e322]:
+              - generic [ref=e323]:
+                - generic [ref=e324]: Structure (ordered ↔ chaotic)
+                - generic [ref=e325]: "-37"
+              - generic [ref=e326]:
+                - generic [ref=e327]: ordered
+                - generic [ref=e334]: chaotic
+              - paragraph [ref=e335]: Level of structure and organization
+              - generic [ref=e336]:
+                - text: "Tends toward:"
+                - generic [ref=e337]: Random, messy, unpredictable
+            - generic [ref=e338]:
+              - generic [ref=e339]:
+                - generic [ref=e340]: Time (future ↔ past)
+                - generic [ref=e341]: "-3"
+              - generic [ref=e342]:
+                - generic [ref=e343]: future
+                - generic [ref=e350]: past
+              - paragraph [ref=e351]: Temporal orientation and direction
+              - generic [ref=e352]:
+                - text: "Tends toward:"
+                - generic [ref=e353]: Neutral
+      - generic [ref=e354]:
+        - button "Start a new analysis" [ref=e355]:
+          - img
+          - text: New Analysis
+        - generic [ref=e356]: Analysis completed at 9:57:28 PM
+    - contentinfo [ref=e357]:
+      - paragraph [ref=e358]: VibeScope uses AI to analyze semantic patterns and manipulation techniques for educational purposes.
+  - button "Open Next.js Dev Tools" [ref=e364] [cursor=pointer]:
+    - img [ref=e365] [cursor=pointer]
+  - alert [ref=e368]
+```

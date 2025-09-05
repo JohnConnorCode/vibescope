@@ -1,14 +1,10 @@
 // src/app/api/vibe/compare/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { embed, anchorEmbeddings, axisScores } from '@/lib/embeddings'
-import { createClient } from '@supabase/supabase-js'
+import { supabaseAdmin } from '@/lib/supabase'
 import { compareVibesNarrative } from '@/lib/narration'
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE!
-const supabase = createClient(url, serviceKey)
-
-let cachedAnchors: any
+let cachedAnchors: Record<string, { pos: number[]; neg: number[] }> | null = null
 
 function cosineSimilarity(a: number[], b: number[]): number {
   const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0)
@@ -30,6 +26,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Provide at least 2 terms' }, { status: 400 })
     }
 
+    const supabase = supabaseAdmin()
+    
     // Get embeddings and axes for all terms
     const results = await Promise.all(terms.map(async (term) => {
       // Check cache first
@@ -50,7 +48,9 @@ export async function POST(req: NextRequest) {
 
       // Compute if not cached
       const embedding = await embed(term)
-      if (!cachedAnchors) cachedAnchors = await anchorEmbeddings()
+      if (!cachedAnchors) {
+        cachedAnchors = await anchorEmbeddings()
+      }
       const axes = await axisScores(embedding, cachedAnchors)
       
       const { data: neighbors } = await supabase.rpc('match_lexicon', { 

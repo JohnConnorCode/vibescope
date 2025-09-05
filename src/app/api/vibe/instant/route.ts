@@ -1,14 +1,10 @@
 // src/app/api/vibe/instant/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { embed, anchorEmbeddings, axisScores } from '@/lib/embeddings'
-import { createClient } from '@supabase/supabase-js'
-
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE!
-const supabase = createClient(url, serviceKey)
+import { supabaseAdmin } from '@/lib/supabase'
 
 // Cache anchor embeddings in memory
-let cachedAnchors: any = null
+let cachedAnchors: Record<string, { pos: number[]; neg: number[] }> | null = null
 let anchorsCachedAt = 0
 const ANCHORS_CACHE_TTL = 60 * 60 * 1000 // 1 hour
 
@@ -18,6 +14,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // 1. Check cache first
+    const supabase = supabaseAdmin()
     const { data: cached } = await supabase
       .from('vibe_cache')
       .select('axes, neighbors, nano_summary')
@@ -48,12 +45,25 @@ export async function GET(req: NextRequest) {
     
     const axes = await axisScores(e, cachedAnchors)
 
-    // 4. Get neighbors (limit to 12 for speed)
-    const { data: neighbors } = await supabase.rpc('match_lexicon', { 
-      query_embedding: e, 
-      match_count: 12,
-      min_freq: 0.001 // Filter out ultra-rare words
-    })
+    // 4. Get neighbors (limit to 12 for speed) - handle empty lexicon gracefully
+    let neighbors: any[] = []
+    try {
+      const { data: neighborsData, error: neighborsError } = await supabase.rpc('match_lexicon', { 
+        query_embedding: e, 
+        match_count: 12,
+        min_freq: 0.001 // Filter out ultra-rare words
+      })
+      
+      if (neighborsError) {
+        console.warn('Neighbors search failed (likely empty lexicon):', neighborsError.message)
+        // Continue without neighbors if lexicon is empty
+      } else {
+        neighbors = neighborsData || []
+      }
+    } catch (error) {
+      console.warn('Neighbors search failed:', error)
+      // Continue without neighbors - app still functions for on-demand analysis
+    }
 
     // 5. Store in cache (don't wait)
     supabase.from('vibe_cache').upsert({ 
@@ -69,7 +79,7 @@ export async function GET(req: NextRequest) {
         body: JSON.stringify({ term, axes, neighbors })
       }).then(res => res.json()).then(({ narrative }) => {
         if (narrative) {
-          supabase.from('vibe_cache').update({ nano_summary: narrative }).eq('term', term)
+          supabaseAdmin().from('vibe_cache').update({ nano_summary: narrative }).eq('term', term)
         }
       }).catch(console.error)
     })
@@ -82,6 +92,24 @@ export async function GET(req: NextRequest) {
     })
   } catch (error) {
     console.error('Instant vibe error:', error)
-    return NextResponse.json({ error: 'Failed to compute vibe' }, { status: 500 })
+    
+    // Provide more helpful error messages
+    let errorMessage = 'Failed to compute vibe'
+    if (error instanceof Error) {
+      if (error.message.includes('API key')) {
+        errorMessage = 'OpenAI API configuration issue - please check your API key'
+      } else if (error.message.includes('embedding')) {
+        errorMessage = 'Failed to generate word embedding - please try again'
+      } else if (error.message.includes('supabase') || error.message.includes('database')) {
+        errorMessage = 'Database connection issue - please try again'
+      } else {
+        errorMessage = `Analysis failed: ${error.message}`
+      }
+    }
+    
+    return NextResponse.json({ 
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error : undefined 
+    }, { status: 500 })
   }
 }

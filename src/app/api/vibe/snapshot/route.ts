@@ -1,13 +1,9 @@
 // src/app/api/vibe/snapshot/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { embed, anchorEmbeddings, axisScores } from '@/lib/embeddings'
-import { createClient } from '@supabase/supabase-js'
+import { supabaseAdmin } from '@/lib/supabase'
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE!
-const supabase = createClient(url, serviceKey)
-
-let cachedAnchors: any
+let cachedAnchors: Record<string, { pos: number[]; neg: number[] }> | null = null
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,6 +19,7 @@ export async function POST(req: NextRequest) {
     const axes = await axisScores(embedding, cachedAnchors)
 
     // Store snapshot
+    const supabase = supabaseAdmin()
     const { data, error } = await supabase.from('snapshots').insert({
       term,
       embedding,
@@ -56,6 +53,7 @@ export async function GET(req: NextRequest) {
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
 
+    const supabase = supabaseAdmin()
     const { data, error } = await supabase
       .from('snapshots')
       .select('*')
