@@ -1,10 +1,10 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
-export default function ComparePage() {
+function CompareContent() {
   const searchParams = useSearchParams()
   const [comparisonData, setComparisonData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -63,7 +63,7 @@ export default function ComparePage() {
   const radarData = comparisonData.results ? 
     Object.keys(comparisonData.results[0].axes).map(axis => ({
       axis,
-      ...comparisonData.results.reduce((acc: any, r: any, i: number) => ({
+      ...comparisonData.results.reduce((acc: any, r: any, _i: number) => ({
         ...acc,
         [r.term]: (r.axes[axis] + 1) * 50
       }), {})
@@ -224,5 +224,20 @@ export default function ComparePage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function ComparePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-b from-neutral-950 to-neutral-900 text-neutral-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-3 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-neutral-400">Loading...</p>
+        </div>
+      </div>
+    }>
+      <CompareContent />
+    </Suspense>
   )
 }
