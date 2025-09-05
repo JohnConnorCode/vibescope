@@ -454,7 +454,7 @@ export default function HomePage() {
             }}
             role="banner"
           >
-            VibeScope [v5-LIVE]
+            VibeScope
           </h1>
           <p className="text-base sm:text-lg lg:text-xl mb-6 sm:mb-8 max-w-4xl mx-auto leading-relaxed px-2" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
             Discover the hidden emotional and semantic dimensions of any word, or analyze sentences for manipulation techniques and propaganda patterns using AI embeddings
@@ -1081,9 +1081,134 @@ export default function HomePage() {
           </section>
         )}
         
-        {/* Footer - Minimal */}
-        <footer className="mt-12 sm:mt-16 text-center text-white/40 text-xs">
-          <p>VibeScope uses AI to analyze semantic patterns and manipulation techniques for educational purposes.</p>
+        {/* Information Section */}
+        <section className="max-w-6xl mx-auto mt-16 mb-12 px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* What is VibeScope */}
+            <div className="p-6 rounded-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <h3 className="text-xl font-semibold mb-3" style={{ color: '#67e8f9' }}>
+                🔍 What is VibeScope?
+              </h3>
+              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                VibeScope is an AI-powered semantic analysis tool that reveals the hidden emotional and contextual dimensions of language. Using advanced embeddings, it maps words and sentences across multiple semantic axes to show their deeper meanings and associations.
+              </p>
+            </div>
+
+            {/* How It Works */}
+            <div className="p-6 rounded-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <h3 className="text-xl font-semibold mb-3" style={{ color: '#c4b5fd' }}>
+                ⚙️ How It Works
+              </h3>
+              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                Enter any word to see its position on 12 semantic dimensions like masculine-feminine, concrete-abstract, or intense-mild. For sentences, VibeScope detects manipulation techniques, propaganda patterns, and rhetorical strategies used in persuasive communication.
+              </p>
+            </div>
+
+            {/* Why Use It */}
+            <div className="p-6 rounded-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <h3 className="text-xl font-semibold mb-3" style={{ color: '#f9a8d4' }}>
+                💡 Why Use VibeScope?
+              </h3>
+              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                Build media literacy, understand language bias, improve writing clarity, and detect manipulation in communication. Perfect for writers, educators, researchers, and anyone interested in the deeper patterns of language and meaning.
+              </p>
+            </div>
+          </div>
+
+          {/* Detailed Features */}
+          <div className="mt-8 p-6 rounded-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+            <h3 className="text-2xl font-semibold mb-4 text-center" style={{ color: 'white' }}>
+              Understanding the Analysis
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              <div>
+                <h4 className="text-lg font-semibold mb-3" style={{ color: '#67e8f9' }}>
+                  📊 Semantic Dimensions for Words
+                </h4>
+                <ul className="space-y-2 text-sm" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Masculine-Feminine:</strong> Gender-associated qualities and energy</li>
+                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Concrete-Abstract:</strong> Physical vs conceptual nature</li>
+                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Active-Passive:</strong> Energy level and dynamism</li>
+                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Positive-Negative:</strong> Emotional valence and sentiment</li>
+                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Complex-Simple:</strong> Sophistication and intricacy</li>
+                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Natural-Artificial:</strong> Authenticity and origin</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="text-lg font-semibold mb-3" style={{ color: '#f9a8d4' }}>
+                  🛡️ Manipulation Detection for Sentences
+                </h4>
+                <ul className="space-y-2 text-sm" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Emotional Manipulation:</strong> Appeals to feelings over facts</li>
+                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Loaded Language:</strong> Words with strong emotional charge</li>
+                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>False Dichotomy:</strong> Presenting only two options</li>
+                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Bandwagon Effect:</strong> "Everyone else is doing it"</li>
+                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Fear Tactics:</strong> Using anxiety to persuade</li>
+                  <li>• <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Gaslighting:</strong> Making you question reality</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="mt-6 p-4 rounded" style={{ backgroundColor: 'rgba(103, 232, 249, 0.1)', border: '1px solid rgba(103, 232, 249, 0.2)' }}>
+              <p className="text-sm text-center" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                <strong>📚 Educational Purpose:</strong> VibeScope is designed to enhance critical thinking and media literacy. 
+                Use it to understand language patterns, not to judge or manipulate others.
+              </p>
+            </div>
+          </div>
+
+          {/* How to Interpret Results */}
+          <div className="mt-8 p-6 rounded-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+            <h3 className="text-2xl font-semibold mb-4 text-center" style={{ color: 'white' }}>
+              How to Interpret Your Results
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              <div className="p-4 rounded" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
+                <h4 className="font-semibold mb-2" style={{ color: '#10B981' }}>
+                  🟢 Radar Chart
+                </h4>
+                <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                  The spider web visualization shows how a word scores on each dimension. Larger areas mean stronger associations with those qualities.
+                </p>
+              </div>
+              
+              <div className="p-4 rounded" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
+                <h4 className="font-semibold mb-2" style={{ color: '#F59E0B' }}>
+                  🟡 Dimension Scores
+                </h4>
+                <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                  Scores range from -100 to +100. Positive scores lean toward the first trait, negative toward the second. Near zero means neutral.
+                </p>
+              </div>
+              
+              <div className="p-4 rounded" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
+                <h4 className="font-semibold mb-2" style={{ color: '#EF4444' }}>
+                  🔴 Manipulation Score
+                </h4>
+                <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                  For sentences, scores above 70 indicate high manipulation, 40-70 moderate, below 40 low. Higher scores mean more persuasive tactics detected.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Footer - Enhanced */}
+        <footer className="mt-12 sm:mt-16 py-8 border-t" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+          <div className="max-w-4xl mx-auto text-center space-y-4 px-4">
+            <p className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+              <strong>VibeScope</strong> • AI-Powered Semantic Analysis Tool
+            </p>
+            <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.4)' }}>
+              Built with Next.js, OpenAI Embeddings, and Voyage AI • For educational and research purposes only
+            </p>
+            <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.3)' }}>
+              Remember: Language is complex and context-dependent. Use these insights as one tool among many for understanding communication.
+            </p>
+          </div>
         </footer>
       </div>
     </div>
