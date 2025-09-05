@@ -454,7 +454,7 @@ export default function HomePage() {
             }}
             role="banner"
           >
-            VibeScope [v4-direct-styles]
+            VibeScope [v5-LIVE]
           </h1>
           <p className="text-base sm:text-lg lg:text-xl mb-6 sm:mb-8 max-w-4xl mx-auto leading-relaxed px-2" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
             Discover the hidden emotional and semantic dimensions of any word, or analyze sentences for manipulation techniques and propaganda patterns using AI embeddings
