@@ -1,0 +1,19 @@
+{
+  "functions": {
+    "src/app/api/og/route.tsx": {
+      "runtime": "edge"
+    },
+    "src/app/api/vibe/instant/route.ts": {
+      "maxDuration": 10
+    },
+    "src/app/api/vibe/compare/route.ts": {
+      "maxDuration": 10
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/v3"
+    }
+  ]
+}
