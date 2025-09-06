@@ -5,6 +5,11 @@
     },
     "src/app/api/vibe/compare/route.ts": {
       "maxDuration": 10
+    },
+    "src/app/api/share/route.ts": {
+      "maxDuration": 10
     }
-  }
+  },
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next"
 }
