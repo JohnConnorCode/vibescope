@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>VibeScope Favicon Generator</title>
+</head>
+<body style="margin: 0; padding: 20px; background: #1a1a1a; display: flex; gap: 20px; flex-wrap: wrap;">
+  
+  <!-- Favicon sizes -->
+  <canvas id="favicon-16" width="16" height="16"></canvas>
+  <canvas id="favicon-32" width="32" height="32"></canvas>
+  <canvas id="favicon-192" width="192" height="192"></canvas>
+  <canvas id="favicon-512" width="512" height="512"></canvas>
+  <canvas id="apple-touch" width="180" height="180"></canvas>
+
+  <script>
+    function drawFavicon(canvasId, size) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      
+      // Set canvas size
+      canvas.width = size;
+      canvas.height = size;
+      
+      // Create gradient background
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#7c3aed');
+      gradient.addColorStop(1, '#a855f7');
+      
+      // Draw rounded square background
+      const radius = size * 0.15;
+      ctx.beginPath();
+      ctx.moveTo(radius, 0);
+      ctx.lineTo(size - radius, 0);
+      ctx.quadraticCurveTo(size, 0, size, radius);
+      ctx.lineTo(size, size - radius);
+      ctx.quadraticCurveTo(size, size, size - radius, size);
+      ctx.lineTo(radius, size);
+      ctx.quadraticCurveTo(0, size, 0, size - radius);
+      ctx.lineTo(0, radius);
+      ctx.quadraticCurveTo(0, 0, radius, 0);
+      ctx.closePath();
+      
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      
+      // Draw stylized V
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = size * 0.12;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      const margin = size * 0.22;
+      const centerX = size / 2;
+      
+      ctx.beginPath();
+      ctx.moveTo(margin, margin * 1.2);
+      ctx.lineTo(centerX, size - margin);
+      ctx.lineTo(size - margin, margin * 1.2);
+      ctx.stroke();
+      
+      // Add glow
+      ctx.shadowColor = 'rgba(168, 85, 247, 0.6)';
+      ctx.shadowBlur = size * 0.08;
+      ctx.stroke();
+      
+      // Setup download
+      canvas.style.cursor = 'pointer';
+      canvas.style.border = '1px solid #333';
+      canvas.style.borderRadius = '4px';
+      canvas.title = `Click to download ${size}x${size} favicon`;
+      
+      canvas.onclick = function() {
+        const link = document.createElement('a');
+        
+        // Set appropriate filename based on size
+        if (size === 16 || size === 32) {
+          link.download = `favicon-${size}x${size}.png`;
+        } else if (size === 192) {
+          link.download = 'android-chrome-192x192.png';
+        } else if (size === 512) {
+          link.download = 'android-chrome-512x512.png';
+        } else if (size === 180) {
+          link.download = 'apple-touch-icon.png';
+        }
+        
+        link.href = canvas.toDataURL();
+        link.click();
+      };
+    }
+    
+    // Generate all sizes
+    drawFavicon('favicon-16', 16);
+    drawFavicon('favicon-32', 32);
+    drawFavicon('favicon-192', 192);
+    drawFavicon('favicon-512', 512);
+    drawFavicon('apple-touch', 180);
+    
+    // Add instructions
+    const instructions = document.createElement('div');
+    instructions.style.cssText = 'width: 100%; color: white; font-family: sans-serif; margin-top: 20px;';
+    instructions.innerHTML = `
+      <h2>VibeScope Favicon Generator</h2>
+      <p>Click each canvas to download the favicon files.</p>
+      <p>Save them in the <code>/public</code> folder with these names:</p>
+      <ul>
+        <li><code>favicon-16x16.png</code> - Small favicon</li>
+        <li><code>favicon-32x32.png</code> - Standard favicon</li>
+        <li><code>android-chrome-192x192.png</code> - Android icon</li>
+        <li><code>android-chrome-512x512.png</code> - Large Android icon</li>
+        <li><code>apple-touch-icon.png</code> - Apple devices icon</li>
+      </ul>
+      <p>Also needed: Create a <code>favicon.ico</code> from the 32x32 PNG using an online converter.</p>
+    `;
+    document.body.appendChild(instructions);
+  </script>
+</body>
+</html>

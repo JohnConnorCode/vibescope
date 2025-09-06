@@ -465,26 +465,8 @@ export default function HomePage() {
             </p>
           </div>
           
-          {/* Feature highlights */}
+          {/* Simplified feature highlights */}
           <div className="flex flex-wrap justify-center gap-4 mb-6">
-            <div className="glass-card px-4 py-2 flex items-center gap-2 hover:scale-105 transition-transform cursor-default">
-              <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-600/20">
-                <Brain className="h-4 w-4 text-purple-400" />
-              </div>
-              <span className="text-sm font-medium">Semantic Analysis</span>
-            </div>
-            <div className="glass-card px-4 py-2 flex items-center gap-2 hover:scale-105 transition-transform cursor-default">
-              <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-500/20 to-orange-600/20">
-                <Shield className="h-4 w-4 text-orange-400" />
-              </div>
-              <span className="text-sm font-medium">Manipulation Detection</span>
-            </div>
-            <div className="glass-card px-4 py-2 flex items-center gap-2 hover:scale-105 transition-transform cursor-default">
-              <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-600/20">
-                <Zap className="h-4 w-4 text-blue-400" />
-              </div>
-              <span className="text-sm font-medium">AI Powered</span>
-            </div>
             <Button
               variant="ghost"
               size="sm"
@@ -493,10 +475,8 @@ export default function HomePage() {
                 showComparison ? 'bg-white/10 border-purple-400' : ''
               }`}
             >
-              <div className="p-1.5 rounded-lg bg-gradient-to-br from-pink-500/20 to-purple-600/20">
-                <GitCompare className="h-4 w-4 text-pink-400" />
-              </div>
-              <span className="text-sm font-medium">Compare Mode</span>
+              <GitCompare className="h-4 w-4 text-purple-400" />
+              <span className="text-sm font-medium">Compare</span>
             </Button>
           </div>
           
@@ -505,25 +485,25 @@ export default function HomePage() {
             <div className="p-4 glass-card-elevated border-l-4 border-purple-400">
               <h3 className="font-semibold text-purple-400 mb-2 flex items-center gap-2">
                 <Brain className="h-4 w-4" />
-                Word Analysis
+                Words
               </h3>
-              <p className="text-xs text-white/70 mb-2">Explore semantic dimensions of individual words</p>
+              <p className="text-xs text-white/70 mb-2">Explore semantic dimensions</p>
               <div className="flex flex-wrap gap-2">
-                <span className="text-xs chip">Concrete vs Abstract</span>
-                <span className="text-xs chip">Positive vs Negative</span>
-                <span className="text-xs chip">Active vs Passive</span>
+                <span className="text-xs chip">Concrete/Abstract</span>
+                <span className="text-xs chip">Positive/Negative</span>
+                <span className="text-xs chip">Active/Passive</span>
               </div>
             </div>
             <div className="p-4 glass-card-elevated border-l-4 border-orange-400">
               <h3 className="font-semibold text-orange-400 mb-2 flex items-center gap-2">
                 <Shield className="h-4 w-4" />
-                Sentence Analysis
+                Sentences
               </h3>
-              <p className="text-xs text-white/70 mb-2">Detect manipulation in headlines, tweets & text</p>
+              <p className="text-xs text-white/70 mb-2">Detect manipulation patterns</p>
               <div className="flex flex-wrap gap-2">
-                <span className="text-xs chip">📰 News Headlines</span>
-                <span className="text-xs chip">🐦 Social Media</span>
-                <span className="text-xs chip">🎯 Political Speech</span>
+                <span className="text-xs chip">Headlines</span>
+                <span className="text-xs chip">Tweets</span>
+                <span className="text-xs chip">Speeches</span>
               </div>
             </div>
           </div>
@@ -606,8 +586,8 @@ export default function HomePage() {
                       type="text"
                       value={term}
                       onChange={handleInputChange}
-                      placeholder="Enter a word for semantic analysis OR paste text to detect manipulation..."
-                      className="input-dark h-14 sm:h-16 pl-6 pr-32 text-base sm:text-lg font-medium"
+                      placeholder="Enter a word or paste text..."
+                      className="input-dark h-14 sm:h-16 text-base sm:text-lg font-medium px-6 pr-[110px] sm:pr-[140px]"
                       autoFocus
                       disabled={loadingState.isLoading}
                       autoComplete="off"
@@ -620,7 +600,7 @@ export default function HomePage() {
                     <Button 
                       type="submit"
                       disabled={loadingState.isLoading || !term.trim() || !!inputError || isSubmissionDisabled}
-                      className="absolute right-2 top-2 h-10 sm:h-12 px-6 btn-primary shadow-lg hover:shadow-xl"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 h-10 sm:h-12 px-4 sm:px-6 btn-primary shadow-lg hover:shadow-xl"
                       aria-label="Analyze input text"
                     >
                       {loadingState.isLoading ? (

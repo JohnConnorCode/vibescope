@@ -40,7 +40,21 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_URL || 'https://vibescope.vercel.app'),
+  icons: {
+    icon: [
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any' }
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
+    ],
+    other: [
+      { rel: 'manifest', url: '/site.webmanifest' }
+    ]
+  },
+  manifest: '/site.webmanifest',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_URL || 'https://vibescope-orpin.vercel.app'),
   alternates: {
     canonical: '/',
   },
