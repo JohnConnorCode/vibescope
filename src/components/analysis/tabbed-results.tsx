@@ -7,8 +7,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { RadarChart } from '@/components/visualization/radar-chart'
-import { AXES } from '@/lib/constants'
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts'
 import { cn } from '@/lib/utils'
 
 interface TabbedResultsProps {
@@ -25,13 +24,12 @@ export function TabbedResults({ vibeData, analysisType, isLoading }: TabbedResul
     if (!vibeData?.axes) return []
     
     return Object.entries(vibeData.axes).map(([k, v]) => {
-      const axis = AXES.find(a => a.key === k)
-      const axisLabel = axis ? axis.label.split(' (')[0] : k
+      const axisLabel = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
       return {
         axis: axisLabel,
-        fullAxis: axis?.label || k,
-        score: Math.max(0, Math.min(100, (v + 1) * 50)),
-        rawScore: v
+        fullAxis: axisLabel,
+        score: Math.max(0, Math.min(100, ((v as number) + 1) * 50)),
+        rawScore: v as number
       }
     })
   }, [vibeData?.axes])
@@ -148,7 +146,7 @@ export function TabbedResults({ vibeData, analysisType, isLoading }: TabbedResul
                       Detected Techniques
                     </h3>
                     <div className="flex flex-wrap gap-2 justify-center">
-                      {manipulationData.techniques.map((tech, i) => (
+                      {manipulationData.techniques.map((tech: string, i: number) => (
                         <span key={i} className="chip flex items-center gap-1">
                           <AlertTriangle className="h-3 w-3" />
                           {tech.replace(/([A-Z])/g, ' $1').trim()}
@@ -267,7 +265,26 @@ export function TabbedResults({ vibeData, analysisType, isLoading }: TabbedResul
                 Semantic Radar
               </h3>
               <div className="h-96">
-                <RadarChart data={radarData} />
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={radarData}>
+                    <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                    <PolarAngleAxis 
+                      dataKey="axis" 
+                      tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.7)' }}
+                    />
+                    <PolarRadiusAxis 
+                      domain={[0, 100]} 
+                      tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }}
+                    />
+                    <Radar 
+                      name="Score" 
+                      dataKey="score" 
+                      stroke="#a855f7" 
+                      fill="#7c3aed" 
+                      fillOpacity={0.3} 
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
               </div>
             </div>
           )}

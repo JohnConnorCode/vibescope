@@ -781,6 +781,8 @@ export default function HomePage() {
             </div>
           </section>
         )}
+          </>
+        )}
 
         {/* Comparison Mode */}
         {showComparison && !loadingState.isLoading && (
@@ -872,6 +874,7 @@ export default function HomePage() {
                 vibeData={vibeData}
               />
             )}
+            </div>
             
             {/* Action Buttons */}
             <div className="flex justify-center gap-3">
@@ -924,8 +927,6 @@ export default function HomePage() {
               </Button>
             </div>
           </section>
-        )}
-          </>
         )}
         
         {/* Batch Analysis Tab */}
