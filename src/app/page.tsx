@@ -27,6 +27,8 @@ import { AdvancedFilters, type AnalysisFilters } from '@/components/analysis/adv
 import { BatchAnalysis } from '@/components/analysis/batch-analysis'
 import { InsightsDashboard } from '@/components/analysis/insights-dashboard'
 import { SavedAnalyses, saveAnalysisToStorage } from '@/components/analysis/saved-analyses'
+import { ReportGenerator } from '@/components/analysis/report-generator'
+import { TextImprover } from '@/components/analysis/text-improver'
 
 interface VibeData {
   term: string
@@ -1016,6 +1018,23 @@ export default function HomePage() {
               term={vibeData.term}
               type={vibeData.type || 'word'}
             />
+            
+            {/* Report Generator */}
+            <ReportGenerator 
+              analysisData={vibeData}
+              userId={user?.id}
+            />
+            
+            {/* Text Improvement Suggestions */}
+            {vibeData.type === 'sentence' && (
+              <TextImprover 
+                originalText={vibeData.term}
+                analysisResult={vibeData}
+                onApplySuggestion={(improvedText) => {
+                  setTerm(improvedText)
+                }}
+              />
+            )}
             
             {/* Analysis Suggestions */}
             <AnalysisSuggestions
