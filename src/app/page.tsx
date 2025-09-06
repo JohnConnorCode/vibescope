@@ -459,9 +459,13 @@ export default function HomePage() {
                 <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur-3xl opacity-30 animate-pulse-glow" />
               </h1>
             </div>
-            <p className="text-lg sm:text-xl lg:text-2xl mb-8 max-w-3xl mx-auto leading-relaxed px-2" 
+            <h2 className="text-2xl sm:text-3xl font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
+              AI-Powered Text Analysis & Manipulation Detection
+            </h2>
+            <p className="text-lg sm:text-xl mb-8 max-w-3xl mx-auto leading-relaxed px-2" 
                style={{ color: 'var(--text-secondary)' }}>
-              Analyze any text for hidden meanings and manipulation
+              Understand the true meaning behind any word or sentence. Detect propaganda techniques, 
+              emotional manipulation, and hidden biases using advanced AI analysis.
             </p>
           </div>
           
@@ -692,7 +696,7 @@ export default function HomePage() {
                           className="glass-card hover:bg-white/10 hover:scale-[1.02] transition-all text-left justify-start px-4 py-3"
                         >
                           <ArrowRight className="h-3 w-3 mr-2 flex-shrink-0 text-purple-400" />
-                          <span className="truncate font-medium">"{demo}"</span>
+                          <span className="truncate font-medium">{demo}</span>
                         </Button>
                       ))}
                     </div>
@@ -981,7 +985,7 @@ export default function HomePage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-purple-400 mt-1">•</span>
-                  <span>GPT-5 nano generates poetic interpretations</span>
+                  <span>AI-powered semantic understanding</span>
                 </li>
               </ul>
             </div>
@@ -1051,7 +1055,7 @@ export default function HomePage() {
             <div className="flex flex-wrap justify-center gap-6 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                <span className="text-white/60">Real AI, No Mock Data</span>
+                <span className="text-white/60">Genuine AI Analysis</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
