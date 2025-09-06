@@ -22,8 +22,9 @@ async function getShareData(id: string) {
   }
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const shareData = await getShareData(params.id)
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  const shareData = await getShareData(id)
   
   if (!shareData) {
     return {
@@ -58,8 +59,9 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   }
 }
 
-export default async function SharePage({ params }: { params: { id: string } }) {
-  const shareData = await getShareData(params.id)
+export default async function SharePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const shareData = await getShareData(id)
   
   if (!shareData) {
     notFound()
