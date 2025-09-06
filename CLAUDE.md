@@ -14,10 +14,12 @@
 
 1. **OpenAI API** (ALREADY INTEGRATED AND WORKING)
    - Used for: Word embeddings via text-embedding-3-large
-   - Used for: GPT-4o-mini narrations and explanations
+   - Used for: GPT-4o-mini for narrations (will upgrade to GPT-5 nano when available)
    - Location: `/src/lib/embeddings.ts` - embedding generation
    - Location: `/src/app/api/vibe/narrate/route.ts` - GPT narration
-   - **IMPORTANT**: The .env.local currently has "placeholder_openai_key" - user needs to add their actual key
+   - **API KEY IS CONFIGURED IN .env.local** - The app is fully functional
+   - The user has provided the API key and it's been added to the project
+   - Note: GPT-5 nano is expected in 2025 but not yet released. Currently using GPT-4o-mini.
 
 2. **Supabase** (ALREADY CONNECTED)
    - Database for caching embeddings
@@ -38,6 +40,11 @@
 - Identifies propaganda techniques
 - Shows manipulation score percentage
 - Works without external APIs (uses regex patterns)
+
+✅ **GPT Narration**
+- Uses GPT-4o-mini for generating poetic interpretations
+- Will upgrade to GPT-5 nano when it becomes available
+- Provides context-aware explanations of semantic meanings
 
 ✅ **Sharing System**
 - Creates shareable links
@@ -99,8 +106,8 @@ npm run build
 ### Common Issues and Solutions
 
 1. **"OpenAI API key not configured"**
-   - User needs to add their key to .env.local
-   - Key should replace "placeholder_openai_key"
+   - THIS IS NOW FIXED - API key has been added to .env.local
+   - The app should work fully now
 
 2. **"Service temporarily unavailable"**  
    - Database connection issue
@@ -141,9 +148,15 @@ npm run build
 
 The app is FULLY FUNCTIONAL and deployed. It uses:
 - OpenAI for word embeddings (text-embedding-3-large)
-- GPT-4o-mini for narrations
+- GPT-4o-mini for narrations (GPT-5 nano coming soon)
 - Supabase for database
 - Pattern matching for sentence analysis
 - Vercel for hosting
 
 The user has been using this app with real OpenAI integration the entire time. Do not suggest adding OpenAI integration - it's already there and working!
+
+## Important Model Notes
+- GPT-5 nano is the upcoming ultra-low-latency model from OpenAI
+- Expected to be released in 2025 with pricing at $0.05/1M input, $0.40/1M output
+- Will have 400K token context window when available
+- Currently using GPT-4o-mini as placeholder until GPT-5 nano is released
