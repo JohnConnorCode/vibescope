@@ -30,6 +30,7 @@ import { SavedAnalyses, saveAnalysisToStorage } from '@/components/analysis/save
 import { ReportGenerator } from '@/components/analysis/report-generator'
 import { TextImprover } from '@/components/analysis/text-improver'
 import { ShareAnalysis } from '@/components/analysis/share-analysis'
+import { TabbedResults } from '@/components/analysis/tabbed-results'
 
 interface VibeData {
   term: string
@@ -814,223 +815,31 @@ export default function HomePage() {
           </section>
         )}
 
-        {/* Results Section */}
+        {/* Results Section - New Tabbed View */}
         {vibeData && !showComparison && (
           <section className="max-w-6xl mx-auto space-y-8 animate-slide-up">
-            {/* Success feedback */}
-            <div className="text-center">
-              <div className="inline-flex items-center gap-2 chip chip-success">
+            {/* Analysis Info Header */}
+            <div className="text-center space-y-2">
+              <div className="inline-flex items-center gap-2 chip chip-success mb-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                 <span>Analysis complete</span>
               </div>
+              <h2 className="text-2xl font-bold">
+                {vibeData.type === 'sentence' ? 'Text' : 'Word'} Analysis Results
+              </h2>
+              <p className="text-white/60 text-sm max-w-2xl mx-auto">
+                "{vibeData.term.slice(0, 100)}{vibeData.term.length > 100 ? '...' : ''}"
+              </p>
             </div>
             
-            {/* Propaganda Analysis for Sentences */}
-            {vibeData.type === 'sentence' && vibeData.propaganda && (
-              <div className="glass-card-elevated p-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <Shield className="h-6 w-6 text-orange-400" />
-                  <h2 className="text-2xl font-bold">Manipulation Analysis</h2>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Overall Score */}
-                  <div className="text-center p-6 glass-card">
-                    <div className={`text-4xl font-bold mb-2 ${
-                      vibeData.propaganda.overallManipulation > 70 ? 'text-red-400' :
-                      vibeData.propaganda.overallManipulation > 40 ? 'text-orange-400' : 'text-green-400'
-                    }`}>
-                      {Math.round(vibeData.propaganda.overallManipulation)}
-                      <span className="text-lg" style={{ color: 'var(--text-muted)' }}>/100</span>
-                    </div>
-                    <div className="font-semibold">Overall Manipulation</div>
-                  </div>
-                  
-                  {/* Individual Scores */}
-                  {Object.entries(vibeData.propaganda)
-                    .filter(([key]) => key !== 'overallManipulation' && key !== 'techniques' && key !== 'explanations')
-                    .map(([key, value]) => {
-                      const score = Math.round(value as number)
-                      if (score === 0) return null
-                      
-                      return (
-                        <div key={key} className="p-4 glass-card">
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm font-medium">
-                              {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                            </span>
-                            <span className={`font-bold ${
-                              score > 70 ? 'text-red-400' :
-                              score > 40 ? 'text-orange-400' : 'text-green-400'
-                            }`}>
-                              {score}
-                            </span>
-                          </div>
-                          <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full rounded-full transition-all duration-1000 ${
-                                score > 70 ? 'bg-red-500' :
-                                score > 40 ? 'bg-orange-500' : 'bg-green-500'
-                              }`}
-                              style={{ width: `${score}%` }}
-                            />
-                          </div>
-                        </div>
-                      )
-                    })}
-                </div>
-                
-                {/* Detected Techniques */}
-                {vibeData.propaganda.techniques.length > 0 && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-semibold mb-4">Detected Techniques</h3>
-                    <div className="space-y-3">
-                      {vibeData.propaganda.explanations.map((explanation, index) => (
-                        <div key={index} className="p-4 glass-card">
-                          <h4 className="text-orange-400 font-medium mb-2">
-                            {vibeData.propaganda?.techniques[index]?.replace(/([A-Z])/g, ' $1').trim()}
-                          </h4>
-                          <p style={{ color: 'var(--text-secondary)' }}>{explanation}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Tabbed Results Component */}
+            <TabbedResults 
+              vibeData={vibeData}
+              analysisType={vibeData.type || (isSentence(vibeData.term) ? 'sentence' : 'word')}
+            />
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Radar Chart */}
-              <div className="glass-card-elevated p-6">
-                <CardHeader className="px-0 pt-0">
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5 text-purple-400" />
-                    Semantic Profile
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="px-0 pb-0">
-                  <div className="h-96">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart data={radarData}>
-                        <PolarGrid stroke="rgba(255,255,255,0.1)" />
-                        <PolarAngleAxis 
-                          dataKey="axis" 
-                          tick={{ 
-                            fontSize: isMobile ? 10 : 12, 
-                            fill: 'var(--text-secondary)',
-                            fontWeight: 500
-                          }}
-                        />
-                        <PolarRadiusAxis 
-                          domain={[0, 100]} 
-                          tick={{ 
-                            fontSize: isMobile ? 8 : 10, 
-                            fill: 'var(--text-muted)'
-                          }}
-                          tickCount={6}
-                        />
-                        <Radar 
-                          name="Semantic Profile" 
-                          dataKey="score" 
-                          stroke="#a855f7" 
-                          fill="#7c3aed" 
-                          fillOpacity={0.3} 
-                          strokeWidth={2}
-                        />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </div>
-
-              {/* Dimension Scores */}
-              <div className="glass-card-elevated p-6">
-                <CardHeader className="px-0 pt-0">
-                  <CardTitle>Dimension Analysis</CardTitle>
-                </CardHeader>
-                <CardContent className="px-0 pb-0">
-                  <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-                    {Object.entries(vibeData.axes).map(([axis, value]) => {
-                      const axisInfo = AXES.find(a => a.key === axis)
-                      const percentage = Math.round(value * 100)
-                      const absPercentage = Math.abs(percentage)
-                      const isPositive = value > 0
-                      
-                      return (
-                        <div key={axis} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-sm">
-                              {axisInfo?.label || axis}
-                            </span>
-                            <span className={`text-sm font-bold ${
-                              Math.abs(percentage) < 10 
-                                ? 'text-gray-400'
-                                : isPositive 
-                                  ? 'text-purple-400' 
-                                  : 'text-blue-400'
-                            }`}>
-                              {percentage > 0 ? '+' : ''}{percentage}
-                            </span>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs w-20 text-right" style={{ color: 'var(--text-muted)' }}>
-                              {axisInfo?.pos}
-                            </span>
-                            <div className="flex-1 h-2 bg-gray-800 rounded-full relative">
-                              <div 
-                                className={`absolute top-0 h-2 rounded-full transition-all duration-700 ${
-                                  isPositive 
-                                    ? 'bg-gradient-to-r from-purple-600 to-purple-400 left-1/2' 
-                                    : 'bg-gradient-to-r from-blue-600 to-blue-400 right-1/2'
-                                }`}
-                                style={{ 
-                                  width: `${absPercentage/2}%`,
-                                  ...(isPositive ? {} : { transform: 'translateX(100%)' })
-                                }}
-                              />
-                              <div className="absolute top-0 left-1/2 transform -translate-x-0.5 w-0.5 h-2 bg-gray-600" />
-                            </div>
-                            <span className="text-xs w-20" style={{ color: 'var(--text-muted)' }}>
-                              {axisInfo?.neg}
-                            </span>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </CardContent>
-              </div>
-            </div>
-            
-            {/* Similar Words */}
-            {vibeData.neighbors && vibeData.neighbors.length > 0 && (
-              <div className="glass-card-elevated p-6">
-                <CardHeader className="px-0 pt-0">
-                  <CardTitle>Similar Semantic Patterns</CardTitle>
-                </CardHeader>
-                <CardContent className="px-0 pb-0">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                    {vibeData.neighbors.slice(0, 18).map((neighbor) => {
-                      const similarity = Math.round((1 - neighbor.distance) * 100)
-                      return (
-                        <Button
-                          key={neighbor.term}
-                          variant="outline"
-                          onClick={() => handleDemoClick(neighbor.term)}
-                          disabled={loadingState.isLoading}
-                          className="btn-secondary text-xs"
-                          title={`Similarity: ${similarity}%`}
-                        >
-                          {neighbor.term}
-                        </Button>
-                      )
-                    })}
-                  </div>
-                </CardContent>
-              </div>
-            )}
-            
+            {/* Action Components */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Share Analysis */}
             <ShareAnalysis 
               analysisData={vibeData}
