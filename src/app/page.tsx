@@ -29,6 +29,7 @@ import { InsightsDashboard } from '@/components/analysis/insights-dashboard'
 import { SavedAnalyses, saveAnalysisToStorage } from '@/components/analysis/saved-analyses'
 import { ReportGenerator } from '@/components/analysis/report-generator'
 import { TextImprover } from '@/components/analysis/text-improver'
+import { ShareAnalysis } from '@/components/analysis/share-analysis'
 
 interface VibeData {
   term: string
@@ -454,9 +455,13 @@ export default function HomePage() {
                 <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur-3xl opacity-30 animate-pulse-glow" />
               </h1>
             </div>
-            <p className="text-lg sm:text-xl lg:text-2xl mb-8 max-w-4xl mx-auto leading-relaxed px-2" 
+            <p className="text-lg sm:text-xl lg:text-2xl mb-4 max-w-4xl mx-auto leading-relaxed px-2" 
                style={{ color: 'var(--text-secondary)' }}>
-              Discover the hidden emotional and semantic dimensions of language with AI-powered analysis
+              Detect manipulation in news headlines, tweets, and any text with AI-powered analysis
+            </p>
+            <p className="text-base sm:text-lg mb-8 max-w-3xl mx-auto px-2" 
+               style={{ color: 'var(--text-tertiary)' }}>
+              Perfect for fact-checkers, journalists, researchers, and anyone who wants to identify bias and propaganda
             </p>
           </div>
           
@@ -472,7 +477,7 @@ export default function HomePage() {
               <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-500/20 to-orange-600/20">
                 <Shield className="h-4 w-4 text-orange-400" />
               </div>
-              <span className="text-sm font-medium">Manipulation Detection</span>
+              <span className="text-sm font-medium">Headlines & Tweets</span>
             </div>
             <div className="glass-card px-4 py-2 flex items-center gap-2 hover:scale-105 transition-transform cursor-default">
               <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-600/20">
@@ -493,6 +498,18 @@ export default function HomePage() {
               </div>
               <span className="text-sm font-medium">Compare Mode</span>
             </Button>
+          </div>
+          
+          {/* Use Cases Banner */}
+          <div className="max-w-4xl mx-auto mb-6 p-4 glass-card-elevated border-l-4 border-orange-400">
+            <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
+              <span className="font-semibold text-orange-400">Perfect for:</span>
+              <span className="chip chip-primary">📰 News Headlines</span>
+              <span className="chip chip-primary">🐦 Tweets</span>
+              <span className="chip chip-primary">📱 Social Media Posts</span>
+              <span className="chip chip-primary">📧 Marketing Copy</span>
+              <span className="chip chip-primary">🎯 Political Speeches</span>
+            </div>
           </div>
           
           {/* Tab Navigation */}
@@ -573,7 +590,7 @@ export default function HomePage() {
                       type="text"
                       value={term}
                       onChange={handleInputChange}
-                      placeholder="Enter any word or sentence to analyze..."
+                      placeholder="Paste a news headline, tweet, or any text to check for manipulation..."
                       className="input-dark h-14 sm:h-16 pl-6 pr-32 text-base sm:text-lg font-medium"
                       autoFocus
                       disabled={loadingState.isLoading}
@@ -680,10 +697,16 @@ export default function HomePage() {
                     <p className="text-sm text-center flex items-center justify-center gap-2"
                        style={{ color: 'var(--text-tertiary)' }}>
                       <Shield className="h-4 w-4" />
-                      Or detect manipulation in these sentences:
+                      Try these example headlines and tweets:
                     </p>
                     <div className="flex flex-col gap-2">
-                      {DEMO_SENTENCES.map((demo, index) => (
+                      {[
+                        '"BREAKING: Scientists discover miracle cure that doctors hate"',
+                        '"Everyone is saying this is the worst decision ever made"',
+                        '"You won\'t believe what this celebrity just did"',
+                        '"Studies show this one weird trick changes everything"',
+                        '"They don\'t want you to know about this secret"'
+                      ].map((demo, index) => (
                         <Button
                           key={index}
                           variant="ghost"
@@ -1011,6 +1034,13 @@ export default function HomePage() {
                 </CardContent>
               </div>
             )}
+            
+            {/* Share Analysis */}
+            <ShareAnalysis 
+              analysisData={vibeData}
+              term={vibeData.term}
+              type={vibeData.type || 'word'}
+            />
             
             {/* Export & Share */}
             <ExportAnalysis 
