@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { nanoid } from 'nanoid'
 import { supabaseAdmin } from '@/lib/supabase'
+import { withRateLimit, rateLimits } from '@/lib/rate-limit'
 
 // In-memory cache for faster access (optional)
 const shareCache = new Map<string, any>()
@@ -20,9 +21,10 @@ setInterval(() => {
 }, 60 * 60 * 1000) // Every hour
 
 export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json()
-    const { term, type, data, expiresIn = 7 * 24 * 60 * 60 * 1000 } = body
+  return withRateLimit(req, async () => {
+    try {
+      const body = await req.json()
+      const { term, type, data, expiresIn = 7 * 24 * 60 * 60 * 1000 } = body
     
     if (!term || !data) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -79,16 +81,18 @@ export async function POST(req: NextRequest) {
       url,
       expiresAt: shareData.expiresAt
     })
-  } catch (error) {
-    console.error('Share creation error:', error)
-    return NextResponse.json({ error: 'Failed to create share link' }, { status: 500 })
-  }
+    } catch (error) {
+      console.error('Share creation error:', error)
+      return NextResponse.json({ error: 'Failed to create share link' }, { status: 500 })
+    }
+  }, rateLimits.api)
 }
 
 export async function GET(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url)
-    const id = searchParams.get('id')
+  return withRateLimit(req, async () => {
+    try {
+      const { searchParams } = new URL(req.url)
+      const id = searchParams.get('id')
     
     if (!id) {
       return NextResponse.json({ error: 'Share ID required' }, { status: 400 })
@@ -159,10 +163,11 @@ export async function GET(req: NextRequest) {
     shareData.views++
     
     return NextResponse.json(shareData)
-  } catch (error) {
-    console.error('Share fetch error:', error)
-    return NextResponse.json({ error: 'Failed to fetch share' }, { status: 500 })
-  }
+    } catch (error) {
+      console.error('Share fetch error:', error)
+      return NextResponse.json({ error: 'Failed to fetch share' }, { status: 500 })
+    }
+  }, rateLimits.read)
 }
 
 // Cleanup expired shares periodically

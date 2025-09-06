@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VibeScope</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <div class="popup-header">
+      <div class="logo">
+        <span class="logo-text">VibeScope</span>
+      </div>
+      <a href="https://vibescope.vercel.app" target="_blank" class="open-app-btn">
+        Open App
+      </a>
+    </div>
+
+    <!-- Main Actions -->
+    <div class="main-section">
+      <!-- Input Section -->
+      <div class="input-section">
+        <textarea 
+          id="text-input" 
+          placeholder="Paste text to analyze for manipulation..."
+          rows="3"
+        ></textarea>
+        <button id="analyze-input" class="analyze-btn">
+          Analyze
+        </button>
+      </div>
+
+      <!-- Or Divider -->
+      <div class="divider">
+        <span>or</span>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <button id="analyze-selection" class="action-btn">
+          Analyze Selected Text
+        </button>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="history-section">
+      <div class="section-header">
+        <h3>Recent Analyses</h3>
+        <button id="clear-history" class="text-btn">Clear</button>
+      </div>
+      <div id="history-list" class="history-list">
+        <div class="empty-state">
+          <p>No history yet</p>
+          <small>Select text and right-click to analyze</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

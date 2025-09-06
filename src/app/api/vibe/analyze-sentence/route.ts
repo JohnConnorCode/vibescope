@@ -1,5 +1,6 @@
 // src/app/api/vibe/analyze-sentence/route.ts
 import { NextRequest, NextResponse } from 'next/server'
+import { withRateLimit, rateLimits } from '@/lib/rate-limit'
 
 // Propaganda detection patterns and techniques
 const PROPAGANDA_PATTERNS = {
@@ -163,31 +164,33 @@ function getMockSentenceData(text: string) {
 }
 
 export async function GET(req: NextRequest) {
-  try {
-    const text = (req.nextUrl.searchParams.get('text') || '').trim()
-    if (!text) {
-      return NextResponse.json({ error: 'Missing required parameter: text' }, { status: 400 })
-    }
+  return withRateLimit(req, async () => {
+    try {
+      const text = (req.nextUrl.searchParams.get('text') || '').trim()
+      if (!text) {
+        return NextResponse.json({ error: 'Missing required parameter: text' }, { status: 400 })
+      }
 
-    // For now, always return mock data for sentence analysis
-    // This can be enhanced with actual AI analysis later
-    console.log('Analyzing sentence for propaganda:', text)
-    return NextResponse.json(getMockSentenceData(text))
-    
-  } catch (error) {
-    console.error('Error analyzing sentence:', error)
-    
-    let errorMessage = 'Failed to analyze sentence'
-    if (error instanceof Error) {
-      errorMessage = `Sentence analysis failed: ${error.message}`
+      // For now, always return mock data for sentence analysis
+      // This can be enhanced with actual AI analysis later
+      console.log('Analyzing sentence for propaganda:', text)
+      return NextResponse.json(getMockSentenceData(text))
+      
+    } catch (error) {
+      console.error('Error analyzing sentence:', error)
+      
+      let errorMessage = 'Failed to analyze sentence'
+      if (error instanceof Error) {
+        errorMessage = `Sentence analysis failed: ${error.message}`
+      }
+      
+      return NextResponse.json(
+        { 
+          error: errorMessage,
+          details: process.env.NODE_ENV === 'development' ? error : undefined 
+        },
+        { status: 500 }
+      )
     }
-    
-    return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? error : undefined 
-      },
-      { status: 500 }
-    )
-  }
+  }, rateLimits.analyze)
 }

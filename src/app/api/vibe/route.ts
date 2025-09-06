@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { embed, anchorEmbeddings, axisScores } from '@/lib/embeddings'
 import { supabaseAdmin } from '@/lib/supabase'
+import { withRateLimit, rateLimits } from '@/lib/rate-limit'
 
 let cachedAnchors: Record<string, { pos: number[]; neg: number[] }> | null = null
 
@@ -36,11 +37,12 @@ function getMockVibeData(term: string) {
 }
 
 export async function GET(req: NextRequest) {
-  try {
-    const term = (req.nextUrl.searchParams.get('term') || '').trim()
-    if (!term) {
-      return NextResponse.json({ error: 'Missing required parameter: term' }, { status: 400 })
-    }
+  return withRateLimit(req, async () => {
+    try {
+      const term = (req.nextUrl.searchParams.get('term') || '').trim()
+      if (!term) {
+        return NextResponse.json({ error: 'Missing required parameter: term' }, { status: 400 })
+      }
 
     // Check if environment is properly configured
     if (!process.env.OPENAI_API_KEY) {
@@ -128,12 +130,13 @@ export async function GET(req: NextRequest) {
       }
     }
     
-    return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? error : undefined 
-      },
-      { status: 500 }
-    )
-  }
+      return NextResponse.json(
+        { 
+          error: errorMessage,
+          details: process.env.NODE_ENV === 'development' ? error : undefined 
+        },
+        { status: 500 }
+      )
+    }
+  }, rateLimits.analyze)
 }

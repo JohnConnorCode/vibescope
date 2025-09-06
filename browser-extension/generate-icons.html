@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>VibeScope Icon Generator</title>
+</head>
+<body style="margin: 0; padding: 20px; background: #1a1a1a; display: flex; gap: 20px; flex-wrap: wrap;">
+  
+  <!-- Icon sizes needed for Chrome extension -->
+  <canvas id="icon-16" width="16" height="16"></canvas>
+  <canvas id="icon-32" width="32" height="32"></canvas>
+  <canvas id="icon-48" width="48" height="48"></canvas>
+  <canvas id="icon-128" width="128" height="128"></canvas>
+
+  <script>
+    // Function to draw the VibeScope icon
+    function drawIcon(canvasId, size) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      
+      // Set canvas size
+      canvas.width = size;
+      canvas.height = size;
+      
+      // Create gradient background
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#7c3aed');
+      gradient.addColorStop(1, '#a855f7');
+      
+      // Draw rounded square background
+      const radius = size * 0.2;
+      ctx.beginPath();
+      ctx.moveTo(radius, 0);
+      ctx.lineTo(size - radius, 0);
+      ctx.quadraticCurveTo(size, 0, size, radius);
+      ctx.lineTo(size, size - radius);
+      ctx.quadraticCurveTo(size, size, size - radius, size);
+      ctx.lineTo(radius, size);
+      ctx.quadraticCurveTo(0, size, 0, size - radius);
+      ctx.lineTo(0, radius);
+      ctx.quadraticCurveTo(0, 0, radius, 0);
+      ctx.closePath();
+      
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      
+      // Draw V letter
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = size * 0.08;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      const margin = size * 0.25;
+      const centerX = size / 2;
+      
+      ctx.beginPath();
+      // Left side of V
+      ctx.moveTo(margin, margin);
+      ctx.lineTo(centerX, size - margin);
+      // Right side of V
+      ctx.moveTo(size - margin, margin);
+      ctx.lineTo(centerX, size - margin);
+      ctx.stroke();
+      
+      // Add a subtle glow effect
+      ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+      ctx.shadowBlur = size * 0.05;
+      ctx.stroke();
+      
+      // Create download link
+      canvas.style.cursor = 'pointer';
+      canvas.title = `Click to download ${size}x${size} icon`;
+      canvas.onclick = function() {
+        const link = document.createElement('a');
+        link.download = `icon-${size}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+      };
+    }
+    
+    // Generate all icon sizes
+    drawIcon('icon-16', 16);
+    drawIcon('icon-32', 32);
+    drawIcon('icon-48', 48);
+    drawIcon('icon-128', 128);
+    
+    // Add instructions
+    const instructions = document.createElement('div');
+    instructions.style.cssText = 'width: 100%; color: white; font-family: sans-serif; margin-top: 20px;';
+    instructions.innerHTML = `
+      <h2>VibeScope Extension Icons</h2>
+      <p>Click on each canvas to download the icon as PNG.</p>
+      <p>Save them in the browser-extension/assets/ folder with these names:</p>
+      <ul>
+        <li>icon-16.png (16x16)</li>
+        <li>icon-32.png (32x32)</li>
+        <li>icon-48.png (48x48)</li>
+        <li>icon-128.png (128x128)</li>
+      </ul>
+      <p>After downloading, the icons will be ready for the Chrome extension.</p>
+    `;
+    document.body.appendChild(instructions);
+  </script>
+</body>
+</html>

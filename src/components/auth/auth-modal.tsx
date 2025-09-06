@@ -145,13 +145,14 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
                     Full Name
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40 z-10 pointer-events-none" />
                     <Input
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="John Doe"
-                      className="input-dark pl-10 h-12"
+                      className="input-dark h-12"
+                      style={{ paddingLeft: '44px' }}
                       required={mode === 'signup'}
                     />
                   </div>
@@ -163,13 +164,14 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
                   Email Address
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40 z-10 pointer-events-none" />
                   <Input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="input-dark pl-10 h-12"
+                    className="input-dark h-12"
+                    style={{ paddingLeft: '44px' }}
                     required
                     autoComplete="email"
                   />
@@ -192,13 +194,14 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
                   )}
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40 z-10 pointer-events-none" />
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="input-dark pl-10 pr-10 h-12"
+                    className="input-dark h-12"
+                    style={{ paddingLeft: '44px', paddingRight: '44px' }}
                     minLength={6}
                     required
                     autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
@@ -206,7 +209,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModal
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3.5 p-0.5 text-white/40 hover:text-white/60 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-0.5 text-white/40 hover:text-white/60 transition-colors z-10"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
