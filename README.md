@@ -23,20 +23,20 @@ A lightning-fast, beautiful, and genuinely useful tool to explore the semantic "
 
 ## Quick Start
 
+**📖 See [SETUP.md](./SETUP.md) for detailed setup instructions**
+
 1. **Install dependencies**
 ```bash
 npm install
 ```
 
 2. **Environment setup**
-```env
-# Required
-OPENAI_API_KEY=sk-...
-NEXT_PUBLIC_SUPABASE_URL=...
-SUPABASE_SERVICE_ROLE=...
-SUPABASE_ANON_KEY=...
-NEXT_PUBLIC_APP_URL=https://yourdomain.com
+```bash
+cp .env.local.example .env.local
+# Edit .env.local and add your OpenAI API key
 ```
+
+**⚠️ Important:** You need a valid OpenAI API key for word analysis to work. Get one at [platform.openai.com](https://platform.openai.com/api-keys)
 
 3. **Database setup**
 ```bash
