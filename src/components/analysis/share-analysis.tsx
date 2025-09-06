@@ -31,8 +31,8 @@ export function ShareAnalysis({ analysisData, term, type }: ShareAnalysisProps) 
     setIsGenerating(true)
     
     try {
-      // Create a shareable snapshot
-      const response = await fetch('/api/vibe/snapshot', {
+      // Create a shareable link
+      const response = await fetch('/api/share', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -44,10 +44,11 @@ export function ShareAnalysis({ analysisData, term, type }: ShareAnalysisProps) 
       })
       
       if (response.ok) {
-        const { id } = await response.json()
-        const url = `${window.location.origin}/vibes/${id}`
-        setShareUrl(url)
-        return url
+        const { id, url } = await response.json()
+        // Use the URL from the response or construct it
+        const shareUrl = url || `${window.location.origin}/share/${id}`
+        setShareUrl(shareUrl)
+        return shareUrl
       }
     } catch (error) {
       console.error('Failed to create shareable link:', error)
