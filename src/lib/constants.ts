@@ -34,12 +34,12 @@ export const UI_CONFIG = {
 export const DEMO_DATA = {
   words: ['punk', 'zen', 'love', 'freedom', 'technology', 'serenity', 'chaos', 'harmony'] as const,
   sentences: [
-    "Everyone knows this is the only solution that works",
-    "They don't want you to know the truth about this", 
-    "You're either with us or against us",
-    "Studies show this might potentially help in some cases",
-    "This breakthrough technology will change everything",
-    "Join thousands of satisfied customers today"
+    'Everyone knows this is the only solution that works',
+    'They don\'t want you to know the truth about this', 
+    'You\'re either with us or against us',
+    'Studies show this might potentially help in some cases',
+    'This breakthrough technology will change everything',
+    'Join thousands of satisfied customers today'
   ] as const
 } as const
 

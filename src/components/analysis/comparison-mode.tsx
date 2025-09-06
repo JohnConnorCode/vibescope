@@ -236,7 +236,7 @@ export function ComparisonMode({ initialTerm, initialData, onAnalyze }: Comparis
                 <tbody>
                   {AXES.map((axis) => (
                     <tr key={axis.key} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                      <td className="py-2 px-3 text-white/70">{axis.name}</td>
+                      <td className="py-2 px-3 text-white/70">{axis.label}</td>
                       {comparisons.map((comp, index) => {
                         const value = comp.axes[axis.key] || 0
                         const normalized = ((value + 1) * 50)
