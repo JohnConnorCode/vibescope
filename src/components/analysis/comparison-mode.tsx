@@ -210,6 +210,70 @@ export function ComparisonMode({ initialTerm, initialData, onAnalyze }: Comparis
             </CardContent>
           </div>
 
+          {/* Comparison Table */}
+          <div className="glass-card-elevated p-6">
+            <CardHeader className="px-0 pt-0">
+              <CardTitle>Detailed Comparison Table</CardTitle>
+            </CardHeader>
+            <CardContent className="px-0 pb-0 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="text-left py-2 px-3 font-medium text-white/70">Dimension</th>
+                    {comparisons.map((comp, index) => (
+                      <th key={index} className="text-center py-2 px-3 font-medium">
+                        <div className="flex items-center justify-center gap-1">
+                          <div 
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: comp.color }}
+                          />
+                          <span>{comp.term}</span>
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {AXES.map((axis) => (
+                    <tr key={axis.key} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                      <td className="py-2 px-3 text-white/70">{axis.name}</td>
+                      {comparisons.map((comp, index) => {
+                        const value = comp.axes[axis.key] || 0
+                        const normalized = ((value + 1) * 50)
+                        const isHighest = Math.max(...comparisons.map(c => c.axes[axis.key] || 0)) === value
+                        const isLowest = Math.min(...comparisons.map(c => c.axes[axis.key] || 0)) === value
+                        
+                        return (
+                          <td key={index} className="text-center py-2 px-3">
+                            <div className="flex flex-col items-center">
+                              <span className={`font-mono text-sm ${
+                                isHighest ? 'text-green-400 font-bold' : 
+                                isLowest ? 'text-red-400' : 
+                                'text-white/80'
+                              }`}>
+                                {value.toFixed(2)}
+                              </span>
+                              <div className="w-full bg-white/10 rounded-full h-1 mt-1">
+                                <div 
+                                  className="h-1 rounded-full transition-all"
+                                  style={{ 
+                                    width: `${Math.abs(normalized)}%`,
+                                    backgroundColor: comp.color,
+                                    marginLeft: value < 0 ? `${50 - Math.abs(normalized)}%` : '50%'
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </div>
+
           {/* Key Differences */}
           {differences.length > 0 && (
             <div className="glass-card-elevated p-6">

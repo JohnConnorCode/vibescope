@@ -11,7 +11,7 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { validateInput, sanitizeInput, isSentence, validateApiResponse, createRateLimiter } from '@/lib/validation'
 import { DEMO_DATA, API_CONFIG, UI_CONFIG } from '@/lib/constants'
-import { Search, AlertCircle, Info, ArrowRight, Sparkles, Brain, Shield, LogIn, Zap, Activity, BarChart3, GitCompare, Settings, FileText, BarChart2, Save, BookOpen, MessageSquare } from 'lucide-react'
+import { Search, AlertCircle, Info, ArrowRight, Sparkles, Brain, Shield, LogIn, Zap, Activity, BarChart3, GitCompare, Settings, BarChart2, Save, BookOpen, MessageSquare } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-provider'
 import { useSessionTracking } from '@/lib/hooks/useSessionTracking'
 import { LoginPrompt } from '@/components/auth/login-prompt'
@@ -24,7 +24,6 @@ import { ComparisonMode } from '@/components/analysis/comparison-mode'
 import { ExportAnalysis } from '@/components/analysis/export-analysis'
 import { AnalysisHistory, addToAnalysisHistory } from '@/components/analysis/analysis-history'
 import { AdvancedFilters, type AnalysisFilters } from '@/components/analysis/advanced-filters'
-import { BatchAnalysis } from '@/components/analysis/batch-analysis'
 import { InsightsDashboard } from '@/components/analysis/insights-dashboard'
 import { SavedAnalyses, saveAnalysisToStorage } from '@/components/analysis/saved-analyses'
 import { ReportGenerator } from '@/components/analysis/report-generator'
@@ -83,7 +82,7 @@ export default function HomePage() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showComparison, setShowComparison] = useState(false)
   const [analysisFilters, setAnalysisFilters] = useState<AnalysisFilters | undefined>()
-  const [activeTab, setActiveTab] = useState<'analyze' | 'batch' | 'insights' | 'saved'>('analyze')
+  const [activeTab, setActiveTab] = useState<'analyze' | 'insights' | 'saved'>('analyze')
   
   // Authentication and session tracking
   const { user } = useAuth()
@@ -516,17 +515,6 @@ export default function HomePage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setActiveTab('batch')}
-                className={`px-6 py-2 transition-all ${
-                  activeTab === 'batch' ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white'
-                }`}
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Batch
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
                 onClick={() => setActiveTab('insights')}
                 className={`px-6 py-2 transition-all ${
                   activeTab === 'insights' ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white'
@@ -930,23 +918,6 @@ export default function HomePage() {
                 Save Analysis
               </Button>
             </div>
-          </section>
-        )}
-        
-        {/* Batch Analysis Tab */}
-        {activeTab === 'batch' && (
-          <section className="max-w-4xl mx-auto animate-slide-up">
-            <BatchAnalysis
-              onAnalyze={async (term) => {
-                const endpoint = isSentence(term)
-                  ? `/api/vibe/analyze-sentence?text=${encodeURIComponent(term)}`
-                  : `/api/vibe?term=${encodeURIComponent(term)}`
-                
-                const res = await fetch(endpoint)
-                if (!res.ok) throw new Error('Failed to analyze')
-                return await res.json()
-              }}
-            />
           </section>
         )}
         
