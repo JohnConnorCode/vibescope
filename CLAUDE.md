@@ -7,7 +7,7 @@
 - **Status**: FULLY FUNCTIONAL with real OpenAI integration
 - **Word Analysis**: Uses OpenAI text-embedding-3-large model for semantic analysis
 - **Sentence Analysis**: Uses pattern matching for manipulation detection  
-- **GPT Narration**: Uses GPT-4o-mini for generating explanations
+- **GPT Narration**: Uses GPT-5 nano for generating explanations
 - **Database**: Supabase with working connection and caching
 
 ### API Keys and Services in Use
@@ -85,7 +85,7 @@
 
 - `/src/lib/embeddings.ts` - OpenAI embedding integration (WORKING)
 - `/src/app/api/vibe/route.ts` - Main word analysis endpoint (USES REAL OPENAI)
-- `/src/app/api/vibe/narrate/route.ts` - GPT narration endpoint (USES GPT-4o-mini)
+- `/src/app/api/vibe/narrate/route.ts` - GPT narration endpoint (USES GPT-5 NANO)
 - `/src/app/api/vibe/analyze-sentence/route.ts` - Pattern-based sentence analysis
 - `/src/app/api/share/route.ts` - Share link creation and retrieval
 - `/browser-extension/` - Chrome extension files
@@ -163,3 +163,16 @@ The user has been using this app with real OpenAI integration the entire time. D
 - **Context window**: 400K tokens
 - **Key features**: Ultra-low latency, reasoning_effort parameter, verbosity control
 - **Use case**: Perfect for high-volume, fast narrations like VibeScope uses
+
+## CRITICAL: OpenAI API Key Location
+- **The API key is in `.env.local`** - Already configured and working
+- **Key starts with**: sk-proj-_1DE2...
+- **User provided this key** - Do not ask for it again
+- **Key is working** - Tested and verified
+
+## App Focus and Purpose
+- **Core Purpose**: Analyze text for hidden meanings and manipulation
+- **Word Analysis**: Deep semantic understanding via embeddings
+- **Sentence Analysis**: Detect propaganda and manipulation techniques
+- **NO MOCK DATA**: The app uses real AI, real analysis, real results
+- **User Trust**: Never mislead users with fake data or placeholders
