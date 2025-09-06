@@ -480,18 +480,19 @@ export default function HomePage() {
             </Button>
           </div>
           
-          {/* Simple Use Cases */}
+          {/* Simple Use Cases - Non-clickable badges */}
           <div className="max-w-4xl mx-auto mb-8 text-center">
+            <p className="text-sm text-white/60 mb-3">Analyze:</p>
             <div className="inline-flex flex-wrap justify-center gap-3">
-              <div className="glass-card px-4 py-2 flex items-center gap-2">
+              <div className="px-4 py-2 flex items-center gap-2 text-white/80 border border-white/20 rounded-lg">
                 <Brain className="h-4 w-4 text-purple-400" />
                 <span className="text-sm">Word meanings</span>
               </div>
-              <div className="glass-card px-4 py-2 flex items-center gap-2">
+              <div className="px-4 py-2 flex items-center gap-2 text-white/80 border border-white/20 rounded-lg">
                 <Shield className="h-4 w-4 text-orange-400" />
                 <span className="text-sm">Headline manipulation</span>
               </div>
-              <div className="glass-card px-4 py-2 flex items-center gap-2">
+              <div className="px-4 py-2 flex items-center gap-2 text-white/80 border border-white/20 rounded-lg">
                 <MessageSquare className="h-4 w-4 text-blue-400" />
                 <span className="text-sm">Social media posts</span>
               </div>
@@ -947,6 +948,122 @@ export default function HomePage() {
             />
           </section>
         )}
+
+        {/* Feature Section - Clear Explanation */}
+        <section className="max-w-6xl mx-auto mt-20 mb-12 px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4 text-gradient">How VibeScope Works</h2>
+            <p className="text-lg text-white/70 max-w-3xl mx-auto">
+              Powered by cutting-edge AI to reveal hidden dimensions in language
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Word Analysis */}
+            <div className="glass-card-elevated p-6 space-y-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 rounded-lg bg-purple-500/20">
+                  <Brain className="h-6 w-6 text-purple-400" />
+                </div>
+                <h3 className="text-xl font-semibold">Semantic Word Analysis</h3>
+              </div>
+              <p className="text-white/70">
+                Uses <strong className="text-purple-400">OpenAI's text-embedding-3-large</strong> model to map words into 3072-dimensional semantic space.
+              </p>
+              <ul className="space-y-2 text-sm text-white/60">
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-400 mt-1">•</span>
+                  <span>Analyzes 12 psychological dimensions like masculine/feminine, concrete/abstract</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-400 mt-1">•</span>
+                  <span>Finds semantically similar words from our lexicon</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-400 mt-1">•</span>
+                  <span>GPT-5 nano generates poetic interpretations</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Manipulation Detection */}
+            <div className="glass-card-elevated p-6 space-y-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 rounded-lg bg-orange-500/20">
+                  <Shield className="h-6 w-6 text-orange-400" />
+                </div>
+                <h3 className="text-xl font-semibold">Manipulation Detection</h3>
+              </div>
+              <p className="text-white/70">
+                Advanced <strong className="text-orange-400">pattern matching algorithms</strong> identify propaganda techniques in headlines and posts.
+              </p>
+              <ul className="space-y-2 text-sm text-white/60">
+                <li className="flex items-start gap-2">
+                  <span className="text-orange-400 mt-1">•</span>
+                  <span>Detects fear tactics, loaded language, false dichotomies</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-orange-400 mt-1">•</span>
+                  <span>Scores manipulation from 0-100% with explanations</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-orange-400 mt-1">•</span>
+                  <span>Identifies specific propaganda techniques used</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Comparison & Insights */}
+            <div className="glass-card-elevated p-6 space-y-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 rounded-lg bg-blue-500/20">
+                  <GitCompare className="h-6 w-6 text-blue-400" />
+                </div>
+                <h3 className="text-xl font-semibold">Deep Comparisons</h3>
+              </div>
+              <p className="text-white/70">
+                Compare multiple terms with <strong className="text-blue-400">detailed visualization</strong> and analysis tables.
+              </p>
+              <ul className="space-y-2 text-sm text-white/60">
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 mt-1">•</span>
+                  <span>Side-by-side comparison of up to 6 terms</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 mt-1">•</span>
+                  <span>Radar charts and detailed comparison tables</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 mt-1">•</span>
+                  <span>Highlights key semantic differences</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Why This Matters */}
+          <div className="mt-12 glass-card-elevated p-8 text-center">
+            <h3 className="text-2xl font-semibold mb-4">Why This Matters</h3>
+            <p className="text-white/70 max-w-3xl mx-auto mb-6">
+              In an era of information warfare and subtle manipulation, understanding the true nature of language is crucial. 
+              VibeScope combines state-of-the-art AI with transparent analysis to help you see beyond surface meanings.
+            </p>
+            <div className="flex flex-wrap justify-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                <span className="text-white/60">Real AI, No Mock Data</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
+                <span className="text-white/60">Privacy-First Design</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+                <span className="text-white/60">Open Source</span>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   )
