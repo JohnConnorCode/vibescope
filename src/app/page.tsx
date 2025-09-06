@@ -11,7 +11,7 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { validateInput, sanitizeInput, isSentence, validateApiResponse, createRateLimiter } from '@/lib/validation'
 import { DEMO_DATA, API_CONFIG, UI_CONFIG } from '@/lib/constants'
-import { Search, AlertCircle, Info, ArrowRight, Sparkles, Brain, Shield, LogIn, Zap, Activity, BarChart3, GitCompare, Settings, FileText, BarChart2, Save, BookOpen } from 'lucide-react'
+import { Search, AlertCircle, Info, ArrowRight, Sparkles, Brain, Shield, LogIn, Zap, Activity, BarChart3, GitCompare, Settings, FileText, BarChart2, Save, BookOpen, MessageSquare } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-provider'
 import { useSessionTracking } from '@/lib/hooks/useSessionTracking'
 import { LoginPrompt } from '@/components/auth/login-prompt'
@@ -456,13 +456,9 @@ export default function HomePage() {
                 <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur-3xl opacity-30 animate-pulse-glow" />
               </h1>
             </div>
-            <p className="text-lg sm:text-xl lg:text-2xl mb-4 max-w-4xl mx-auto leading-relaxed px-2" 
+            <p className="text-lg sm:text-xl lg:text-2xl mb-8 max-w-3xl mx-auto leading-relaxed px-2" 
                style={{ color: 'var(--text-secondary)' }}>
-              Analyze language at every level: from individual words to full headlines and posts
-            </p>
-            <p className="text-base sm:text-lg mb-8 max-w-3xl mx-auto px-2" 
-               style={{ color: 'var(--text-tertiary)' }}>
-              Uncover semantic dimensions of words • Detect manipulation in sentences • Identify propaganda techniques
+              Analyze any text for hidden meanings and manipulation
             </p>
           </div>
           
@@ -481,30 +477,20 @@ export default function HomePage() {
             </Button>
           </div>
           
-          {/* Use Cases Banner */}
-          <div className="max-w-5xl mx-auto mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 glass-card-elevated border-l-4 border-purple-400">
-              <h3 className="font-semibold text-purple-400 mb-2 flex items-center gap-2">
-                <Brain className="h-4 w-4" />
-                Words
-              </h3>
-              <p className="text-xs text-white/70 mb-2">Explore semantic dimensions</p>
-              <div className="flex flex-wrap gap-2">
-                <span className="text-xs chip">Concrete/Abstract</span>
-                <span className="text-xs chip">Positive/Negative</span>
-                <span className="text-xs chip">Active/Passive</span>
+          {/* Simple Use Cases */}
+          <div className="max-w-4xl mx-auto mb-8 text-center">
+            <div className="inline-flex flex-wrap justify-center gap-3">
+              <div className="glass-card px-4 py-2 flex items-center gap-2">
+                <Brain className="h-4 w-4 text-purple-400" />
+                <span className="text-sm">Word meanings</span>
               </div>
-            </div>
-            <div className="p-4 glass-card-elevated border-l-4 border-orange-400">
-              <h3 className="font-semibold text-orange-400 mb-2 flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                Sentences
-              </h3>
-              <p className="text-xs text-white/70 mb-2">Detect manipulation patterns</p>
-              <div className="flex flex-wrap gap-2">
-                <span className="text-xs chip">Headlines</span>
-                <span className="text-xs chip">Tweets</span>
-                <span className="text-xs chip">Speeches</span>
+              <div className="glass-card px-4 py-2 flex items-center gap-2">
+                <Shield className="h-4 w-4 text-orange-400" />
+                <span className="text-sm">Headline manipulation</span>
+              </div>
+              <div className="glass-card px-4 py-2 flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-blue-400" />
+                <span className="text-sm">Social media posts</span>
               </div>
             </div>
           </div>
