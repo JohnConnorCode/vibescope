@@ -11,7 +11,7 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { validateInput, sanitizeInput, isSentence, validateApiResponse, createRateLimiter } from '@/lib/validation'
 import { DEMO_DATA, API_CONFIG, UI_CONFIG } from '@/lib/constants'
-import { Search, AlertCircle, Info, ArrowRight, Sparkles, Brain, Shield, LogIn, Zap, Activity, BarChart3, GitCompare, Settings, FileText, BarChart2 } from 'lucide-react'
+import { Search, AlertCircle, Info, ArrowRight, Sparkles, Brain, Shield, LogIn, Zap, Activity, BarChart3, GitCompare, Settings, FileText, BarChart2, Save, BookOpen } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-provider'
 import { useSessionTracking } from '@/lib/hooks/useSessionTracking'
 import { LoginPrompt } from '@/components/auth/login-prompt'
@@ -26,7 +26,7 @@ import { AnalysisHistory, addToAnalysisHistory } from '@/components/analysis/ana
 import { AdvancedFilters, type AnalysisFilters } from '@/components/analysis/advanced-filters'
 import { BatchAnalysis } from '@/components/analysis/batch-analysis'
 import { InsightsDashboard } from '@/components/analysis/insights-dashboard'
-import { ApiDocumentation } from '@/components/developer/api-documentation'
+import { SavedAnalyses, saveAnalysisToStorage } from '@/components/analysis/saved-analyses'
 
 interface VibeData {
   term: string
@@ -77,7 +77,7 @@ export default function HomePage() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showComparison, setShowComparison] = useState(false)
   const [analysisFilters, setAnalysisFilters] = useState<AnalysisFilters | undefined>()
-  const [activeTab, setActiveTab] = useState<'analyze' | 'batch' | 'insights' | 'developers'>('analyze')
+  const [activeTab, setActiveTab] = useState<'analyze' | 'batch' | 'insights' | 'saved'>('analyze')
   
   // Authentication and session tracking
   const { user } = useAuth()
@@ -529,6 +529,17 @@ export default function HomePage() {
                 <BarChart2 className="h-4 w-4 mr-2" />
                 Insights
               </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setActiveTab('saved')}
+                className={`px-6 py-2 transition-all ${
+                  activeTab === 'saved' ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white'
+                }`}
+              >
+                <BookOpen className="h-4 w-4 mr-2" />
+                Saved
+              </Button>
             </div>
           </div>
         </header>
@@ -856,7 +867,7 @@ export default function HomePage() {
                       {vibeData.propaganda.explanations.map((explanation, index) => (
                         <div key={index} className="p-4 glass-card">
                           <h4 className="text-orange-400 font-medium mb-2">
-                            {vibeData.propaganda.techniques[index].replace(/([A-Z])/g, ' $1').trim()}
+                            {vibeData.propaganda?.techniques[index]?.replace(/([A-Z])/g, ' $1').trim()}
                           </h4>
                           <p style={{ color: 'var(--text-secondary)' }}>{explanation}</p>
                         </div>
@@ -1047,6 +1058,30 @@ export default function HomePage() {
                 <GitCompare className="h-4 w-4 mr-2" />
                 Compare Terms
               </Button>
+              
+              <Button
+                onClick={() => {
+                  const title = prompt('Enter a title for this saved analysis:')
+                  if (title) {
+                    saveAnalysisToStorage(
+                      title,
+                      vibeData.term,
+                      vibeData.type || 'word',
+                      vibeData,
+                      [],
+                      '',
+                      undefined,
+                      user?.id
+                    )
+                    alert('Analysis saved successfully!')
+                  }
+                }}
+                variant="outline"
+                className="btn-secondary"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Save Analysis
+              </Button>
             </div>
           </section>
         )}
@@ -1074,6 +1109,26 @@ export default function HomePage() {
         {activeTab === 'insights' && (
           <section className="max-w-6xl mx-auto animate-slide-up">
             <InsightsDashboard userId={user?.id} />
+          </section>
+        )}
+        
+        {/* Saved Analyses Tab */}
+        {activeTab === 'saved' && (
+          <section className="max-w-6xl mx-auto animate-slide-up">
+            <SavedAnalyses 
+              userId={user?.id}
+              onLoad={(analysis) => {
+                setTerm(analysis.text)
+                setVibeData({
+                  term: analysis.text,
+                  type: analysis.type,
+                  axes: analysis.result?.axes || {},
+                  propaganda: analysis.result?.propaganda,
+                  neighbors: analysis.result?.neighbors
+                })
+                setActiveTab('analyze')
+              }}
+            />
           </section>
         )}
       </div>

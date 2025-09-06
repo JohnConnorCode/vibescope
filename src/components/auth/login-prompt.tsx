@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, TrendingUp, History, Heart, Award, Sparkles, Brain, Lock, ChevronRight } from 'lucide-react'
+import { X, TrendingUp, History, Heart, Award, Sparkles, Brain, Lock, ChevronRight, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from './auth-provider'
 
