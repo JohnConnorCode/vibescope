@@ -14,12 +14,13 @@
 
 1. **OpenAI API** (ALREADY INTEGRATED AND WORKING)
    - Used for: Word embeddings via text-embedding-3-large
-   - Used for: GPT-4o-mini for narrations (will upgrade to GPT-5 nano when available)
+   - Used for: GPT-5 nano for narrations (announced August 7, 2025)
    - Location: `/src/lib/embeddings.ts` - embedding generation
    - Location: `/src/app/api/vibe/narrate/route.ts` - GPT narration
    - **API KEY IS CONFIGURED IN .env.local** - The app is fully functional
    - The user has provided the API key and it's been added to the project
-   - Note: GPT-5 nano is expected in 2025 but not yet released. Currently using GPT-4o-mini.
+   - GPT-5 nano pricing: $0.05/1M input, $0.40/1M output tokens
+   - 400K context window
 
 2. **Supabase** (ALREADY CONNECTED)
    - Database for caching embeddings
@@ -42,8 +43,8 @@
 - Works without external APIs (uses regex patterns)
 
 ✅ **GPT Narration**
-- Uses GPT-4o-mini for generating poetic interpretations
-- Will upgrade to GPT-5 nano when it becomes available
+- Uses GPT-5 nano for generating poetic interpretations
+- Ultra-low latency model announced August 7, 2025
 - Provides context-aware explanations of semantic meanings
 
 ✅ **Sharing System**
@@ -148,15 +149,17 @@ npm run build
 
 The app is FULLY FUNCTIONAL and deployed. It uses:
 - OpenAI for word embeddings (text-embedding-3-large)
-- GPT-4o-mini for narrations (GPT-5 nano coming soon)
+- GPT-5 nano for narrations (ultra-low latency model)
 - Supabase for database
 - Pattern matching for sentence analysis
 - Vercel for hosting
 
 The user has been using this app with real OpenAI integration the entire time. Do not suggest adding OpenAI integration - it's already there and working!
 
-## Important Model Notes
-- GPT-5 nano is the upcoming ultra-low-latency model from OpenAI
-- Expected to be released in 2025 with pricing at $0.05/1M input, $0.40/1M output
-- Will have 400K token context window when available
-- Currently using GPT-4o-mini as placeholder until GPT-5 nano is released
+## Important Model Notes - GPT-5 Nano
+- **Model name in API**: `gpt-5-nano`
+- **Released**: August 7, 2025
+- **Pricing**: $0.05/1M input tokens, $0.40/1M output tokens
+- **Context window**: 400K tokens
+- **Key features**: Ultra-low latency, reasoning_effort parameter, verbosity control
+- **Use case**: Perfect for high-volume, fast narrations like VibeScope uses
