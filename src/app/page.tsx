@@ -457,11 +457,11 @@ export default function HomePage() {
             </div>
             <p className="text-lg sm:text-xl lg:text-2xl mb-4 max-w-4xl mx-auto leading-relaxed px-2" 
                style={{ color: 'var(--text-secondary)' }}>
-              Detect manipulation in news headlines, tweets, and any text with AI-powered analysis
+              Analyze language at every level: from individual words to full headlines and posts
             </p>
             <p className="text-base sm:text-lg mb-8 max-w-3xl mx-auto px-2" 
                style={{ color: 'var(--text-tertiary)' }}>
-              Perfect for fact-checkers, journalists, researchers, and anyone who wants to identify bias and propaganda
+              Uncover semantic dimensions of words • Detect manipulation in sentences • Identify propaganda techniques
             </p>
           </div>
           
@@ -477,7 +477,7 @@ export default function HomePage() {
               <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-500/20 to-orange-600/20">
                 <Shield className="h-4 w-4 text-orange-400" />
               </div>
-              <span className="text-sm font-medium">Headlines & Tweets</span>
+              <span className="text-sm font-medium">Manipulation Detection</span>
             </div>
             <div className="glass-card px-4 py-2 flex items-center gap-2 hover:scale-105 transition-transform cursor-default">
               <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-600/20">
@@ -501,14 +501,30 @@ export default function HomePage() {
           </div>
           
           {/* Use Cases Banner */}
-          <div className="max-w-4xl mx-auto mb-6 p-4 glass-card-elevated border-l-4 border-orange-400">
-            <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
-              <span className="font-semibold text-orange-400">Perfect for:</span>
-              <span className="chip chip-primary">📰 News Headlines</span>
-              <span className="chip chip-primary">🐦 Tweets</span>
-              <span className="chip chip-primary">📱 Social Media Posts</span>
-              <span className="chip chip-primary">📧 Marketing Copy</span>
-              <span className="chip chip-primary">🎯 Political Speeches</span>
+          <div className="max-w-5xl mx-auto mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 glass-card-elevated border-l-4 border-purple-400">
+              <h3 className="font-semibold text-purple-400 mb-2 flex items-center gap-2">
+                <Brain className="h-4 w-4" />
+                Word Analysis
+              </h3>
+              <p className="text-xs text-white/70 mb-2">Explore semantic dimensions of individual words</p>
+              <div className="flex flex-wrap gap-2">
+                <span className="text-xs chip">Concrete vs Abstract</span>
+                <span className="text-xs chip">Positive vs Negative</span>
+                <span className="text-xs chip">Active vs Passive</span>
+              </div>
+            </div>
+            <div className="p-4 glass-card-elevated border-l-4 border-orange-400">
+              <h3 className="font-semibold text-orange-400 mb-2 flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                Sentence Analysis
+              </h3>
+              <p className="text-xs text-white/70 mb-2">Detect manipulation in headlines, tweets & text</p>
+              <div className="flex flex-wrap gap-2">
+                <span className="text-xs chip">📰 News Headlines</span>
+                <span className="text-xs chip">🐦 Social Media</span>
+                <span className="text-xs chip">🎯 Political Speech</span>
+              </div>
             </div>
           </div>
           
@@ -590,7 +606,7 @@ export default function HomePage() {
                       type="text"
                       value={term}
                       onChange={handleInputChange}
-                      placeholder="Paste a news headline, tweet, or any text to check for manipulation..."
+                      placeholder="Enter a word for semantic analysis OR paste text to detect manipulation..."
                       className="input-dark h-14 sm:h-16 pl-6 pr-32 text-base sm:text-lg font-medium"
                       autoFocus
                       disabled={loadingState.isLoading}
