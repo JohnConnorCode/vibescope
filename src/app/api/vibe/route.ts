@@ -41,13 +41,31 @@ export async function GET(req: NextRequest) {
     try {
       const term = (req.nextUrl.searchParams.get('term') || '').trim()
       if (!term) {
-        return NextResponse.json({ error: 'Missing required parameter: term' }, { status: 400 })
+        return NextResponse.json(
+          { error: 'Missing required parameter: term' }, 
+          { 
+            status: 400,
+            headers: {
+              'X-Content-Type-Options': 'nosniff',
+              'X-Frame-Options': 'DENY',
+              'X-XSS-Protection': '1; mode=block'
+            }
+          }
+        )
       }
 
     // Check if environment is properly configured
     if (!process.env.OPENAI_API_KEY) {
-      console.warn('OpenAI API key not found, returning mock data for testing')
-      return NextResponse.json(getMockVibeData(term))
+      return NextResponse.json(
+        { ...getMockVibeData(term), isMockData: true, warning: 'Using mock data - OpenAI API not configured' },
+        {
+          headers: {
+            'X-Content-Type-Options': 'nosniff',
+            'X-Frame-Options': 'DENY',
+            'X-XSS-Protection': '1; mode=block'
+          }
+        }
+      )
     }
 
     try {
@@ -65,7 +83,16 @@ export async function GET(req: NextRequest) {
       }
       
       if (hit) {
-        return NextResponse.json({ term, axes: hit.axes, neighbors: hit.neighbors })
+        return NextResponse.json(
+          { term, axes: hit.axes, neighbors: hit.neighbors },
+          {
+            headers: {
+              'X-Content-Type-Options': 'nosniff',
+              'X-Frame-Options': 'DENY',
+              'X-XSS-Protection': '1; mode=block'
+            }
+          }
+        )
       }
 
       // 2) compute embedding
@@ -84,13 +111,11 @@ export async function GET(req: NextRequest) {
           .rpc('match_lexicon', { query_embedding: e, match_count: 24 })
         
         if (rpcError) {
-          console.warn('Neighbors search failed (likely empty lexicon):', rpcError.message)
           // Continue without neighbors if lexicon is empty
         } else {
           neighbors = neighborsData || []
         }
       } catch (error) {
-        console.warn('Neighbors search failed:', error)
         // Continue without neighbors - app still functions for on-demand analysis
       }
 
@@ -108,10 +133,35 @@ export async function GET(req: NextRequest) {
         // Continue without caching
       }
 
-      return NextResponse.json({ term, axes, neighbors })
+      return NextResponse.json(
+        { term, axes, neighbors },
+        {
+          headers: {
+            'X-Content-Type-Options': 'nosniff',
+            'X-Frame-Options': 'DENY',
+            'X-XSS-Protection': '1; mode=block'
+          }
+        }
+      )
     } catch (dbError) {
-      console.warn('Database/embedding service unavailable, using mock data:', dbError)
-      return NextResponse.json(getMockVibeData(term))
+      console.error('Database/embedding service error:', dbError)
+      return NextResponse.json(
+        { 
+          error: 'Service temporarily unavailable', 
+          isMockData: true,
+          warning: 'Database connection failed - using fallback data',
+          ...getMockVibeData(term) 
+        },
+        {
+          status: 503,
+          headers: {
+            'X-Content-Type-Options': 'nosniff',
+            'X-Frame-Options': 'DENY',
+            'X-XSS-Protection': '1; mode=block',
+            'Retry-After': '60'
+          }
+        }
+      )
     }
   } catch (error) {
     console.error('Error processing vibe:', error)

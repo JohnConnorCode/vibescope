@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { nanoid } from 'nanoid'
 import { supabaseAdmin } from '@/lib/supabase'
 import { withRateLimit, rateLimits } from '@/lib/rate-limit'
+import { headers } from 'next/headers'
 
 // In-memory cache for faster access (optional)
 const shareCache = new Map<string, any>()
@@ -21,6 +22,26 @@ setInterval(() => {
 }, 60 * 60 * 1000) // Every hour
 
 export async function POST(req: NextRequest) {
+  // CSRF protection
+  const origin = req.headers.get('origin')
+  const referer = req.headers.get('referer')
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://vibescope.vercel.app'
+  
+  // Check origin/referer for CSRF protection
+  if (origin && !origin.startsWith(appUrl)) {
+    return NextResponse.json(
+      { error: 'Invalid request origin' },
+      { status: 403 }
+    )
+  }
+  
+  if (!origin && referer && !referer.startsWith(appUrl)) {
+    return NextResponse.json(
+      { error: 'Invalid request referer' },
+      { status: 403 }
+    )
+  }
+  
   return withRateLimit(req, async () => {
     try {
       const body = await req.json()
@@ -53,11 +74,10 @@ export async function POST(req: NextRequest) {
         })
       
       if (error) {
-        console.warn('Database storage failed, using cache:', error)
-        // Fall back to in-memory storage
+        // Fall back to in-memory storage if database fails
       }
     } catch (dbError) {
-      console.warn('Database not available, using in-memory cache')
+      // Database not available, use in-memory cache
     }
     
     // Also store in cache for quick access
@@ -80,6 +100,13 @@ export async function POST(req: NextRequest) {
       id,
       url,
       expiresAt: shareData.expiresAt
+    }, {
+      headers: {
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block',
+        'Referrer-Policy': 'strict-origin-when-cross-origin'
+      }
     })
     } catch (error) {
       console.error('Share creation error:', error)
@@ -133,7 +160,7 @@ export async function GET(req: NextRequest) {
           shareCache.set(id, shareData)
         }
       } catch (dbError) {
-        console.warn('Database fetch failed:', dbError)
+        // Database fetch failed, continue with cache check
       }
     }
     
@@ -153,7 +180,7 @@ export async function GET(req: NextRequest) {
           .delete()
           .eq('id', id)
       } catch (dbError) {
-        console.warn('Could not delete expired share from database:', dbError)
+        // Could not delete expired share from database
       }
       
       return NextResponse.json({ error: 'Share link has expired' }, { status: 410 })
@@ -162,7 +189,14 @@ export async function GET(req: NextRequest) {
     // Increment view count in cache
     shareData.views++
     
-    return NextResponse.json(shareData)
+    return NextResponse.json(shareData, {
+      headers: {
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block',
+        'Referrer-Policy': 'strict-origin-when-cross-origin'
+      }
+    })
     } catch (error) {
       console.error('Share fetch error:', error)
       return NextResponse.json({ error: 'Failed to fetch share' }, { status: 500 })

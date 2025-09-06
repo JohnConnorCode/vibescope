@@ -82,6 +82,7 @@ export default function HomePage() {
   const [showComparison, setShowComparison] = useState(false)
   const [analysisFilters, setAnalysisFilters] = useState<AnalysisFilters | undefined>()
   const [activeTab, setActiveTab] = useState<'analyze' | 'batch' | 'insights' | 'saved'>('analyze')
+  const [mockDataWarning, setMockDataWarning] = useState<string | null>(null)
   
   // Authentication and session tracking
   const { user } = useAuth()
@@ -236,6 +237,13 @@ export default function HomePage() {
       setLoadingState(prev => ({ ...prev, progress: 'Processing results...' }))
       
       const data = await res.json()
+      
+      // Check for mock data warning
+      if (data.isMockData || data.warning) {
+        setMockDataWarning(data.warning || 'Using fallback data - some features may be limited')
+      } else {
+        setMockDataWarning(null)
+      }
       
       // Validate API response
       const responseValidation = validateApiResponse(data)
@@ -461,6 +469,18 @@ export default function HomePage() {
               Analyze any text for hidden meanings and manipulation
             </p>
           </div>
+          
+          {/* Mock Data Warning Banner */}
+          {mockDataWarning && (
+            <div className="max-w-4xl mx-auto mb-6 p-3 glass-card border-yellow-500/30 bg-yellow-500/10 rounded-lg animate-fade-in">
+              <div className="flex items-center gap-2 text-yellow-400 text-sm">
+                <svg className="w-4 h-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <span>{mockDataWarning}</span>
+              </div>
+            </div>
+          )}
           
           {/* Simplified feature highlights */}
           <div className="flex flex-wrap justify-center gap-4 mb-6">

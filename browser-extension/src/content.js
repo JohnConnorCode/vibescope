@@ -2,6 +2,13 @@
 
 let currentOverlay = null;
 
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'show-loading') {
@@ -24,6 +31,7 @@ function showLoadingOverlay(text) {
   removeOverlay();
   
   const overlay = createOverlay();
+  const safeText = escapeHtml(text.slice(0, 100)) + (text.length > 100 ? '...' : '');
   overlay.innerHTML = `
     <div class="vs-header">
       <div class="vs-logo">VibeScope</div>
@@ -33,7 +41,7 @@ function showLoadingOverlay(text) {
       <div class="vs-loading">
         <div class="vs-spinner"></div>
         <p>Analyzing text...</p>
-        <p class="vs-text-preview">"${text.slice(0, 100)}${text.length > 100 ? '...' : ''}"</p>
+        <p class="vs-text-preview">"${safeText}"</p>
       </div>
     </div>
   `;
@@ -110,7 +118,7 @@ function showResultsOverlay(text, data, type) {
     </div>
     <div class="vs-content">
       <div class="vs-text-analyzed">
-        <p>"${text.slice(0, 200)}${text.length > 200 ? '...' : ''}"</p>
+        <p>"${escapeHtml(text.slice(0, 200)) + (text.length > 200 ? '...' : '')}"</p>
       </div>
       
       ${resultHTML}

@@ -168,13 +168,31 @@ export async function GET(req: NextRequest) {
     try {
       const text = (req.nextUrl.searchParams.get('text') || '').trim()
       if (!text) {
-        return NextResponse.json({ error: 'Missing required parameter: text' }, { status: 400 })
+        return NextResponse.json(
+          { error: 'Missing required parameter: text' }, 
+          { 
+            status: 400,
+            headers: {
+              'X-Content-Type-Options': 'nosniff',
+              'X-Frame-Options': 'DENY',
+              'X-XSS-Protection': '1; mode=block'
+            }
+          }
+        )
       }
 
       // For now, always return mock data for sentence analysis
       // This can be enhanced with actual AI analysis later
-      console.log('Analyzing sentence for propaganda:', text)
-      return NextResponse.json(getMockSentenceData(text))
+      return NextResponse.json(
+        getMockSentenceData(text),
+        {
+          headers: {
+            'X-Content-Type-Options': 'nosniff',
+            'X-Frame-Options': 'DENY',
+            'X-XSS-Protection': '1; mode=block'
+          }
+        }
+      )
       
     } catch (error) {
       console.error('Error analyzing sentence:', error)
