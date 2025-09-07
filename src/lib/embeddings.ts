@@ -9,8 +9,14 @@ let embedder: Embedder
 
 async function initializeEmbedder() {
   // Read environment variables at runtime, not module load time
-  const provider = process.env.PROVIDER || 'openai'
-  const modelSpec = process.env.EMBEDDING_MODEL || 'openai:text-embedding-3-large'
+  // Clean up malformed env vars from Vercel (remove quotes, newlines, etc)
+  const cleanEnv = (val: string | undefined, fallback: string) => {
+    if (!val) return fallback
+    return val.replace(/^["']|["']$/g, '').replace(/\\n/g, '').trim()
+  }
+  
+  const provider = cleanEnv(process.env.PROVIDER, 'openai')
+  const modelSpec = cleanEnv(process.env.EMBEDDING_MODEL, 'openai:text-embedding-3-large')
   
   if (provider === 'openai') {
     // npm i openai
