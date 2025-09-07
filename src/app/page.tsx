@@ -36,6 +36,8 @@ interface VibeData {
   axes: Record<string, number>
   neighbors?: Array<{ term: string; distance: number }>
   type?: 'word' | 'sentence'
+  isMockData?: boolean
+  warning?: string
   propaganda?: {
     overallManipulation: number
     emotionalManipulation: number
@@ -812,11 +814,34 @@ export default function HomePage() {
         {/* Results Section - New Tabbed View */}
         {vibeData && !showComparison && (
           <section className="max-w-6xl mx-auto space-y-8 animate-slide-up">
+            {/* Mock Data Warning Banner */}
+            {vibeData.isMockData && (
+              <div className="glass-card border-2 border-yellow-500/50 bg-yellow-500/10 p-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="font-semibold text-yellow-300">Demo Mode - Using Fallback Data</p>
+                    <p className="text-sm text-yellow-200/80">
+                      {vibeData.warning || 'Database connection unavailable. Showing demonstration data.'}
+                    </p>
+                    <p className="text-xs text-yellow-200/60 mt-2">
+                      The analysis below is for demonstration purposes only. Real AI analysis requires a working database connection.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {/* Analysis Info Header */}
             <div className="text-center space-y-2">
               <div className="inline-flex items-center gap-2 chip chip-success mb-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                 <span>Analysis complete</span>
+                {vibeData.isMockData && (
+                  <span className="ml-2 px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs rounded-full border border-yellow-500/30">
+                    DEMO
+                  </span>
+                )}
               </div>
               <h2 className="text-2xl font-bold">
                 {vibeData.type === 'sentence' ? 'Text' : 'Word'} Analysis Results

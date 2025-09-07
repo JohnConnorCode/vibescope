@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
     // Check if environment is properly configured
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
-        { ...getMockVibeData(term), isMockData: true, warning: 'Using mock data - OpenAI API not configured' },
+        { ...getMockVibeData(term), isMockData: true, warning: 'OpenAI API not configured. Showing demo data for illustration purposes only.' },
         {
           headers: {
             'X-Content-Type-Options': 'nosniff',
@@ -149,7 +149,7 @@ export async function GET(req: NextRequest) {
         { 
           error: 'Service temporarily unavailable', 
           isMockData: true,
-          warning: 'Database connection failed - using fallback data',
+          warning: 'Database temporarily unavailable. Showing demo data - analysis may not reflect actual AI results.',
           ...getMockVibeData(term) 
         },
         {
