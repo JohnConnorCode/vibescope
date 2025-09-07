@@ -6,35 +6,7 @@ import { withRateLimit, rateLimits } from '@/lib/rate-limit'
 
 let cachedAnchors: Record<string, { pos: number[]; neg: number[] }> | null = null
 
-// Mock data for testing when API is not configured
-function getMockVibeData(term: string) {
-  // Simple hash-based mock generation for consistent results
-  const hash = Array.from(term).reduce((a, b) => {
-    a = ((a << 5) - a) + b.charCodeAt(0)
-    return a & a
-  }, 0)
-  
-  const random = (seed: number) => Math.abs(Math.sin(seed)) * 2 - 1
-  
-  return {
-    term,
-    axes: {
-      masculine_feminine: random(hash * 1),
-      concrete_abstract: random(hash * 2), 
-      active_passive: random(hash * 3),
-      positive_negative: random(hash * 4),
-      serious_playful: random(hash * 5),
-      complex_simple: random(hash * 6),
-      intense_mild: random(hash * 7),
-      natural_artificial: random(hash * 8),
-      private_public: random(hash * 9),
-      high_status_low_status: random(hash * 10),
-      ordered_chaotic: random(hash * 11),
-      future_past: random(hash * 12)
-    },
-    neighbors: [] // Remove dummy data
-  }
-}
+// NO MOCK DATA - Real API only
 
 export async function GET(req: NextRequest) {
   return withRateLimit(req, async () => {
@@ -57,7 +29,7 @@ export async function GET(req: NextRequest) {
     // Check if environment is properly configured
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
-        { ...getMockVibeData(term), isMockData: true, warning: 'OpenAI API not configured. Showing demo data for illustration purposes only.' },
+        { error: 'OpenAI API key not configured in environment variables' },
         {
           headers: {
             'X-Content-Type-Options': 'nosniff',
@@ -145,12 +117,10 @@ export async function GET(req: NextRequest) {
       )
     } catch (dbError) {
       console.error('Database/embedding service error:', dbError)
+      const errorMessage = dbError instanceof Error ? dbError.message : 'Unknown error'
       return NextResponse.json(
         { 
-          error: 'Service temporarily unavailable', 
-          isMockData: true,
-          warning: 'Database temporarily unavailable. Showing demo data - analysis may not reflect actual AI results.',
-          ...getMockVibeData(term) 
+          error: 'API Error: ' + errorMessage
         },
         {
           status: 503,
