@@ -1,10 +1,6 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('AI Integration Tests', () => {
-  test.use({
-    baseURL: 'http://localhost:3001'
-  });
-
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     // Wait for page to be fully loaded
@@ -203,11 +199,11 @@ test.describe('AI Integration Tests', () => {
 
 test.describe('Production AI Tests', () => {
   test.use({
-    baseURL: 'https://vibescope.vercel.app'
+    baseURL: 'https://vibescope-orpin.vercel.app'
   });
 
   test('Production API should respond with real AI analysis', async ({ page }) => {
-    const response = await page.request.get('https://vibescope.vercel.app/api/vibe?term=harmony');
+    const response = await page.request.get('https://vibescope-orpin.vercel.app/api/vibe?term=harmony');
     
     // Should either work or return specific error
     if (response.ok()) {

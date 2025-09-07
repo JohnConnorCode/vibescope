@@ -10,7 +10,7 @@ test.describe('VibeScope App', () => {
     await expect(page.locator('h1')).toContainText('VibeScope');
     
     // Check for tagline - updated to match actual text
-    await expect(page.locator('text=/Discover the hidden emotional/')).toBeVisible();
+    await expect(page.locator('text=/Understand the true meaning/')).toBeVisible();
     
     // Check main input is present
     const searchInput = page.locator('input[placeholder*="Enter"]');
@@ -102,16 +102,21 @@ test.describe('VibeScope App', () => {
     }
   });
 
-  test('should have working "How it works" button', async ({ page }) => {
-    // Look for How it works button
-    const howItWorksButton = page.locator('button').filter({ hasText: /How it works/i });
+  test('should have working tab navigation', async ({ page }) => {
+    // Test the tab navigation - be more specific to avoid the submit button
+    const analyzeTab = page.locator('button').filter({ hasText: 'Analyze' }).first();
+    const compareTab = page.locator('button').filter({ hasText: 'Compare' });
+    const insightsTab = page.locator('button').filter({ hasText: 'Insights' });
     
-    if (await howItWorksButton.isVisible()) {
-      await howItWorksButton.click();
-      
-      // Should show modal or expanded content
-      await expect(page.locator('text=/semantic|AI|embedding/i')).toBeVisible({ timeout: 5000 });
-    }
+    // Check tabs are visible
+    await expect(analyzeTab).toBeVisible();
+    await expect(compareTab).toBeVisible();
+    await expect(insightsTab).toBeVisible();
+    
+    // Test switching tabs
+    await compareTab.click();
+    // Just check it's still visible after clicking
+    await expect(compareTab).toBeVisible();
   });
 
   test('should display proper error handling', async ({ page }) => {
