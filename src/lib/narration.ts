@@ -30,7 +30,7 @@ export async function generateVibeNarrative(
     Style: Poetic but precise. Reference the data naturally. Max 40 words.`
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-5-nano', // Using GPT-5 nano for ultra-fast narrations
+      model: 'gpt-4o-mini', // Using GPT-4o-mini for fast narrations (GPT-5 nano not yet available)
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.8,
       max_tokens: 60

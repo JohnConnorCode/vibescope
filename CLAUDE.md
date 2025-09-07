@@ -43,8 +43,8 @@
 - Works without external APIs (uses regex patterns)
 
 ✅ **GPT Narration**
-- Uses GPT-5 nano for generating poetic interpretations
-- Ultra-low latency model announced August 7, 2025
+- Uses GPT-4o-mini for generating poetic interpretations
+- Fast, cost-effective model for narrations
 - Provides context-aware explanations of semantic meanings
 
 ✅ **Sharing System**
@@ -156,13 +156,10 @@ The app is FULLY FUNCTIONAL and deployed. It uses:
 
 The user has been using this app with real OpenAI integration the entire time. Do not suggest adding OpenAI integration - it's already there and working!
 
-## Important Model Notes - GPT-5 Nano
-- **Model name in API**: `gpt-5-nano`
-- **Released**: August 7, 2025
-- **Pricing**: $0.05/1M input tokens, $0.40/1M output tokens
-- **Context window**: 400K tokens
-- **Key features**: Ultra-low latency, reasoning_effort parameter, verbosity control
-- **Use case**: Perfect for high-volume, fast narrations like VibeScope uses
+## Important Model Notes
+- **Model in use**: `gpt-4o-mini` for narrations
+- **Note**: GPT-5 nano referenced in original spec but not yet available in OpenAI API
+- **Current implementation**: Using gpt-4o-mini which provides fast, reliable narrations
 
 ## CRITICAL: OpenAI API Key Location
 - **The API key is in `.env.local`** - Already configured and working
