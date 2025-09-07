@@ -66,57 +66,27 @@ export function InsightsDashboard({ userId }: InsightsDashboardProps) {
         return true
       })
       
-      // Calculate stats
-      const stats: DashboardStats = {
-        totalAnalyses: filteredHistory.length,
-        weeklyGrowth: calculateGrowth(history),
-        averageScore: calculateAverageScore(filteredHistory),
-        topTerms: calculateTopTerms(filteredHistory),
-        sentimentTrend: calculateSentimentTrend(filteredHistory),
-        manipulationDistribution: calculateManipulationDistribution(filteredHistory),
-        hourlyActivity: calculateHourlyActivity(filteredHistory),
-        categoryBreakdown: calculateCategoryBreakdown(filteredHistory)
+      // Only show stats if we have meaningful data (at least 5 analyses)
+      if (filteredHistory.length < 5) {
+        setStats(null)
+      } else {
+        // Calculate stats
+        const stats: DashboardStats = {
+          totalAnalyses: filteredHistory.length,
+          weeklyGrowth: calculateGrowth(history),
+          averageScore: calculateAverageScore(filteredHistory),
+          topTerms: calculateTopTerms(filteredHistory),
+          sentimentTrend: calculateSentimentTrend(filteredHistory),
+          manipulationDistribution: calculateManipulationDistribution(filteredHistory),
+          hourlyActivity: calculateHourlyActivity(filteredHistory),
+          categoryBreakdown: calculateCategoryBreakdown(filteredHistory)
+        }
+        
+        setStats(stats)
       }
-      
-      setStats(stats)
     } else {
-      // Mock data for demonstration
-      setStats({
-        totalAnalyses: 142,
-        weeklyGrowth: 23.5,
-        averageScore: 67.8,
-        topTerms: [
-          { term: 'democracy', count: 15 },
-          { term: 'freedom', count: 12 },
-          { term: 'innovation', count: 10 },
-          { term: 'success', count: 8 },
-          { term: 'future', count: 7 }
-        ],
-        sentimentTrend: [
-          { date: 'Mon', positive: 45, negative: 20, neutral: 35 },
-          { date: 'Tue', positive: 50, negative: 15, neutral: 35 },
-          { date: 'Wed', positive: 40, negative: 25, neutral: 35 },
-          { date: 'Thu', positive: 55, negative: 10, neutral: 35 },
-          { date: 'Fri', positive: 60, negative: 15, neutral: 25 },
-          { date: 'Sat', positive: 48, negative: 22, neutral: 30 },
-          { date: 'Sun', positive: 52, negative: 18, neutral: 30 }
-        ],
-        manipulationDistribution: [
-          { range: '0-20%', count: 25, color: '#10b981' },
-          { range: '21-40%', count: 35, color: '#3b82f6' },
-          { range: '41-60%', count: 28, color: '#f59e0b' },
-          { range: '61-80%', count: 18, color: '#ef4444' },
-          { range: '81-100%', count: 8, color: '#dc2626' }
-        ],
-        hourlyActivity: Array.from({ length: 24 }, (_, i) => ({
-          hour: i,
-          count: Math.floor(Math.random() * 20) + 5
-        })),
-        categoryBreakdown: [
-          { category: 'Words', value: 65, color: '#8b5cf6' },
-          { category: 'Sentences', value: 35, color: '#ec4899' }
-        ]
-      })
+      // No data yet - set null to show empty state
+      setStats(null)
     }
     
     setTimeout(() => setIsLoading(false), 500)
@@ -214,8 +184,9 @@ export function InsightsDashboard({ userId }: InsightsDashboardProps) {
     return (
       <div className="glass-card-elevated p-12 text-center">
         <Activity className="h-12 w-12 text-purple-400 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold mb-2">No Data Available</h3>
-        <p className="text-white/60">Start analyzing text to see insights</p>
+        <h3 className="text-xl font-semibold mb-2">Insights Coming Soon</h3>
+        <p className="text-white/60 mb-2">Analyze at least 5 texts to see your insights dashboard</p>
+        <p className="text-white/40 text-sm">Your analysis history is stored locally and used to generate personalized insights</p>
       </div>
     )
   }
