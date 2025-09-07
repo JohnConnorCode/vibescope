@@ -459,59 +459,48 @@ export default function HomePage() {
                 <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur-3xl opacity-30 animate-pulse-glow" />
               </h1>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
+            <h2 className="text-2xl sm:text-3xl font-semibold mb-3 animate-fade-in-up animation-delay-200" style={{ color: 'var(--text-primary)' }}>
               AI-Powered Text Analysis & Manipulation Detection
             </h2>
-            <p className="text-lg sm:text-xl mb-8 max-w-3xl mx-auto leading-relaxed px-2" 
+            <p className="text-lg sm:text-xl mb-8 max-w-3xl mx-auto leading-relaxed px-2 animate-fade-in-up animation-delay-300" 
                style={{ color: 'var(--text-secondary)' }}>
               Understand the true meaning behind any word or sentence. Detect propaganda techniques, 
               emotional manipulation, and hidden biases using advanced AI analysis.
             </p>
           </div>
           
-          {/* Simplified feature highlights */}
-          <div className="flex flex-wrap justify-center gap-4 mb-6">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowComparison(!showComparison)}
-              className={`glass-card px-4 py-2 flex items-center gap-2 hover:scale-105 transition-transform ${
-                showComparison ? 'bg-white/10 border-purple-400' : ''
-              }`}
-            >
-              <GitCompare className="h-4 w-4 text-purple-400" />
-              <span className="text-sm font-medium">Compare</span>
-            </Button>
-          </div>
-          
-          {/* Simple Use Cases - Non-clickable badges */}
-          <div className="max-w-4xl mx-auto mb-8 text-center">
-            <p className="text-sm text-white/60 mb-3">Analyze:</p>
-            <div className="inline-flex flex-wrap justify-center gap-3">
-              <div className="px-4 py-2 flex items-center gap-2 text-white/80 border border-white/20 rounded-lg">
+          {/* Capabilities Overview - Professional badges */}
+          <div className="max-w-4xl mx-auto mb-8 text-center animate-fade-in animation-delay-400">
+            <div className="inline-flex flex-wrap justify-center gap-4">
+              <div className="flex items-center gap-2 text-white/60">
                 <Brain className="h-4 w-4 text-purple-400" />
-                <span className="text-sm">Word meanings</span>
+                <span className="text-sm">Word Analysis</span>
               </div>
-              <div className="px-4 py-2 flex items-center gap-2 text-white/80 border border-white/20 rounded-lg">
+              <span className="text-white/20">•</span>
+              <div className="flex items-center gap-2 text-white/60">
                 <Shield className="h-4 w-4 text-orange-400" />
-                <span className="text-sm">Headline manipulation</span>
+                <span className="text-sm">Manipulation Detection</span>
               </div>
-              <div className="px-4 py-2 flex items-center gap-2 text-white/80 border border-white/20 rounded-lg">
+              <span className="text-white/20">•</span>
+              <div className="flex items-center gap-2 text-white/60">
                 <MessageSquare className="h-4 w-4 text-blue-400" />
-                <span className="text-sm">Social media posts</span>
+                <span className="text-sm">Social Media Analysis</span>
               </div>
             </div>
           </div>
           
           {/* Tab Navigation */}
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-8 animate-fade-in-up animation-delay-500">
             <div className="glass-card p-1 inline-flex gap-1">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setActiveTab('analyze')}
+                onClick={() => {
+                  setActiveTab('analyze');
+                  setShowComparison(false);
+                }}
                 className={`px-6 py-2 transition-all ${
-                  activeTab === 'analyze' ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white'
+                  activeTab === 'analyze' && !showComparison ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white'
                 }`}
               >
                 <Search className="h-4 w-4 mr-2" />
@@ -520,7 +509,24 @@ export default function HomePage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setActiveTab('insights')}
+                onClick={() => {
+                  setActiveTab('analyze');
+                  setShowComparison(true);
+                }}
+                className={`px-6 py-2 transition-all ${
+                  showComparison ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white'
+                }`}
+              >
+                <GitCompare className="h-4 w-4 mr-2" />
+                Compare
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setActiveTab('insights');
+                  setShowComparison(false);
+                }}
                 className={`px-6 py-2 transition-all ${
                   activeTab === 'insights' ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white'
                 }`}
@@ -531,7 +537,10 @@ export default function HomePage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setActiveTab('saved')}
+                onClick={() => {
+                  setActiveTab('saved');
+                  setShowComparison(false);
+                }}
                 className={`px-6 py-2 transition-all ${
                   activeTab === 'saved' ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white'
                 }`}
